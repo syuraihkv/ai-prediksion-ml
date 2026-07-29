@@ -1,65 +1,145 @@
-# Financial ML Trading System
+# 🤖 AI Prediction ML Trading System
 
-A comprehensive Machine Learning system for financial market prediction with historical backtesting and real-time paper trading capabilities.
+<div align="center">
 
-## Features
+![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.0+-red.svg)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+![Status](https://img.shields.io/badge/Status-Active-success.svg)
 
-- **Multi-Instrument Support**: Bitcoin, Gold, NASDAQ
-- **Multiple Timeframes**: 5-minute, 1-hour, 4-hour
-- **Advanced Feature Engineering**: 20+ technical indicators
+**Advanced Machine Learning System for Financial Market Prediction**
+
+Comprehensive trading dashboard with AI-powered predictions, technical analysis, and real-time monitoring
+
+[🚀 Features](#-features) • [📊 Dashboard](#-interactive-dashboard) • [🛠️ Installation](#️-installation) • [📖 Usage](#-usage) • [🎯 Tech Stack](#-tech-stack)
+
+</div>
+
+## 🚀 Features
+
+### 📊 Market Analysis
+- **Multi-Instrument Support**: Bitcoin (BTC/USD), Gold (XAU/USD), NASDAQ
+- **Multiple Timeframes**: 1H, 4H, Daily analysis
+- **Technical Indicators**: RSI, MACD, Moving Averages, ATR, Support/Resistance
+- **Volume Analysis**: Volume profile and market depth
+- **Multi-Timeframe Analysis**: Trend alignment across timeframes
+- **Correlation Analysis**: Asset correlation heatmap for diversification
+
+### 🤖 AI & Prediction
 - **Multiple ML Models**: Logistic Regression, Random Forest, XGBoost, LightGBM, CatBoost
+- **Advanced Feature Engineering**: 20+ technical indicators
 - **Hyperparameter Optimization**: Optuna-based tuning
 - **Walk-Forward Validation**: Time-series aware validation
-- **Comprehensive Backtesting**: 15+ performance metrics
-- **Real-Time Paper Trading**: Live prediction and tracking
-- **Interactive Dashboard**: Streamlit-based visualization
+- **Model Comparison**: Compare multiple models side-by-side
+- **Probability Calculator**: Expected Value, Kelly Criterion, Monte Carlo Simulation
 
-## Project Structure
+### 📰 News & Events
+- **News Intelligence**: Real-time news sentiment analysis
+- **Economic Calendar**: High-impact events with countdown
+- **Historical Impact Analysis**: Past event impact on markets
+- **Fear/Greed Index**: Market sentiment extremes analysis
+
+### 📈 Performance
+- **Historical Accuracy**: Track prediction performance over time
+- **Backtesting**: Historical backtesting with real data
+- **Performance Metrics**: Sharpe Ratio, Win Rate, Drawdown analysis
+- **Equity Curve**: Visual performance tracking
+
+### 🛠️ Tools
+- **Personal Notes**: SQLite-based note-taking system
+- **Risk Management**: Position sizing and risk analysis
+- **Custom Configuration**: Flexible settings and parameters
+
+## 📊 Interactive Dashboard
+
+The system features a modern, glass-morphism styled Streamlit dashboard with:
+
+- **Real-time Price Charts** with technical indicators overlay
+- **Volume Analysis** with color-coded volume bars
+- **Multi-Timeframe Comparison** charts
+- **Correlation Heatmaps** for asset relationships
+- **Economic Calendar** with historical impact visualization
+- **Fear/Greed Index** with historical trends
+- **Monte Carlo Simulation** for probability analysis
+- **Backtesting Results** with equity curves
+
+### Dashboard Tabs
+
+1. **Market Analysis** - Technical indicators, volume, multi-timeframe, correlation
+2. **News & Events** - News intelligence, economic calendar, fear/greed index
+3. **AI & Probability** - AI predictions, model comparison, probability calculator
+4. **Performance** - Historical accuracy, backtesting
+5. **Tools** - Personal notes
+
+## 🏗️ Project Structure
 
 ```
 financial_ml_trading/
 ├── data/
-│   ├── raw/              # Raw downloaded data
-│   ├── processed/        # Processed feature data
-│   └── models/           # Saved model files
+│   └── raw/              # Historical price and macro data
 ├── database/
-│   └── trading.db        # SQLite database
-├── notebooks/
-│   └── exploration.ipynb # EDA notebooks
+│   ├── predictions.db    # Prediction history
+│   └── notes.db          # Personal notes
 ├── src/
-│   ├── __init__.py
 │   ├── config.py         # Configuration settings
-│   ├── data_collector.py # Data fetching
-│   ├── feature_engineering.py
-│   ├── preprocessing.py
-│   ├── model_training.py
-│   ├── hyperparameter_tuning.py
-│   ├── evaluation.py
-│   ├── backtest.py
-│   ├── realtime_trading.py
-│   └── utils.py
-├── streamlit_app.py
-├── requirements.txt
+│   ├── market_api.py     # Market data API
+│   ├── news_analyzer.py  # News sentiment analysis
+│   ├── economic_api.py   # Economic calendar API
+│   ├── database.py       # Database operations
+│   ├── predict.py        # ML prediction engine
+│   ├── train.py          # Model training
+│   ├── feature_engineering_new.py
+│   └── utils.py          # Utility functions
+├── .streamlit/
+│   └── config.toml       # Streamlit configuration
+├── streamlit_app.py      # Main dashboard application
+├── requirements.txt      # Python dependencies
 └── README.md
 ```
 
-## Installation
+## 🛠️ Installation
 
-1. Clone the repository
-2. Install dependencies:
+### Prerequisites
+
+- Python 3.8 or higher
+- pip package manager
+
+### Quick Start
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/syuraihkv/ai-prediksion-ml.git
+cd ai-prediksion-ml
+```
+
+2. **Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Install TA-Lib (required for technical indicators):
+3. **Run the dashboard**
 ```bash
-# Windows
+streamlit run streamlit_app.py
+```
+
+The dashboard will be available at `http://localhost:8501`
+
+### TA-Lib Installation (Optional)
+
+For advanced technical indicators, install TA-Lib:
+
+**Windows:**
+```bash
 Download from: http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-msvc.zip
+```
 
-# macOS
+**macOS:**
+```bash
 brew install ta-lib
+```
 
-# Linux
+**Linux:**
+```bash
 wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
 tar -xzf ta-lib-0.4.0-src.tar.gz
 cd ta-lib/
@@ -68,178 +148,58 @@ make
 sudo make install
 ```
 
-## Usage
+## 📖 Usage
 
-### Data Collection
-
-```python
-from src.data_collector import DataCollector
-
-collector = DataCollector()
-data = collector.collect_all_data()
-```
-
-### Feature Engineering
-
-```python
-from src.feature_engineering import FeatureEngineer
-
-engineer = FeatureEngineer()
-features = engineer.create_features(price_data)
-```
-
-### Model Training
-
-```python
-from src.model_training import ModelTrainer
-
-trainer = ModelTrainer()
-model = trainer.train_model(X_train, y_train)
-```
-
-### Backtesting
-
-```python
-from src.backtest import Backtester
-
-backtester = Backtester()
-results = backtester.run_backtest(model, test_data)
-```
-
-### Real-Time Trading
-
-```python
-from src.realtime_trading import RealTimeTrader
-
-trader = RealTimeTrader()
-trader.start_trading()
-```
-
-### Streamlit Dashboard
+### Running the Dashboard
 
 ```bash
 streamlit run streamlit_app.py
 ```
 
-## Deployment
+### Dashboard Navigation
 
-### Docker Deployment
+1. **Select Asset** - Choose from BTC/USD, XAU/USD, or NASDAQ
+2. **Explore Tabs** - Navigate through Market Analysis, News & Events, AI & Probability, Performance, and Tools
+3. **View Predictions** - Get AI-powered trading signals with confidence scores
+4. **Analyze Charts** - Interactive charts with technical indicators
+5. **Track Performance** - Monitor historical accuracy and backtesting results
 
-The application can be deployed using Docker for easy containerization and deployment.
+### Key Features
 
-#### Prerequisites
-- Docker installed on your system
-- Docker Compose (optional, for easier deployment)
+- **Real-time Updates**: Automatic data refresh for market prices and news
+- **Interactive Charts**: Zoom, pan, and explore detailed visualizations
+- **Historical Analysis**: View past performance and trends
+- **Probability Tools**: Monte Carlo simulation for risk assessment
+- **Personal Notes**: Save your trading ideas and observations
 
-#### Build and Run with Docker Compose (Recommended)
+## 🎯 Tech Stack
 
-```bash
-# Build and start the container
-docker-compose up -d
+### Core Technologies
+- **Python 3.8+** - Core programming language
+- **Streamlit** - Interactive dashboard framework
+- **Pandas** - Data manipulation and analysis
+- **NumPy** - Numerical computing
+- **SQLite** - Database management
 
-# View logs
-docker-compose logs -f
+### Machine Learning
+- **Scikit-learn** - ML algorithms and utilities
+- **XGBoost** - Gradient boosting framework
+- **LightGBM** - Light gradient boosting
+- **CatBoost** - Gradient boosting on decision trees
 
-# Stop the container
-docker-compose down
-```
+### Data Visualization
+- **Matplotlib** - Plotting library
+- **Seaborn** - Statistical data visualization
+- **Plotly** - Interactive plots
 
-The application will be available at `http://localhost:8501`
+### APIs & Data Sources
+- **Yahoo Finance** - Market data
+- **FRED** - Economic indicators
+- **News APIs** - Sentiment analysis
 
-#### Build and Run with Docker
-
-```bash
-# Build the image
-docker build -t financial-ml-trading .
-
-# Run the container
-docker run -d \
-  -p 8501:8501 \
-  -v $(pwd)/data:/app/data \
-  -v $(pwd)/database:/app/database \
-  -v $(pwd)/catboost_info:/app/catboost_info \
-  --name financial-ml-trading \
-  financial-ml-trading
-```
-
-#### Data Persistence
-
-The Docker setup uses volume mounts to persist data outside the container:
-- `./data` - Raw and processed data
-- `./database` - SQLite database
-- `./catboost_info` - CatBoost training info
-
-This ensures your data and models are preserved even when the container is recreated.
-
-#### Environment Variables
-
-You can customize the application by setting environment variables:
-- `STREAMLIT_SERVER_PORT` - Port for Streamlit server (default: 8501)
-- `STREAMLIT_SERVER_ADDRESS` - Server address (default: 0.0.0.0)
-
-#### Cloud Deployment
-
-For cloud deployment, you can push the Docker image to a container registry and deploy to:
-- **AWS ECS/Fargate**
-- **Google Cloud Run**
-- **Azure Container Instances**
-- **Heroku** (using container registry)
-- **Railway**
-- **Render**
-
-Example for deploying to a cloud platform:
-```bash
-# Tag and push to registry
-docker tag financial-ml-trading your-registry/financial-ml-trading:latest
-docker push your-registry/financial-ml-trading:latest
-
-# Deploy using your cloud provider's CLI
-```
-
-### Streamlit Cloud Deployment
-
-For easy deployment to Streamlit Cloud, follow these steps:
-
-#### Prerequisites
-- GitHub account with the code pushed to a repository
-- Streamlit Cloud account (free tier available)
-
-#### Deployment Steps
-
-1. **Push code to GitHub**
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/yourusername/financial-ml-trading.git
-git push -u origin main
-```
-
-2. **Deploy to Streamlit Cloud**
-- Go to [share.streamlit.io](https://share.streamlit.io)
-- Click "New app"
-- Connect your GitHub repository
-- Select the repository and branch
-- Set main file path to `streamlit_app.py`
-- Click "Deploy"
-
-#### Streamlit Cloud Configuration Files
-
-The project includes the following files for Streamlit Cloud:
-- `requirements.txt` - Python dependencies
-- `packages.txt` - System dependencies (TA-Lib)
-- `.streamlit/config.toml` - Streamlit configuration
-
-#### Important Notes for Streamlit Cloud
-
-- **TA-Lib Installation**: Streamlit Cloud will automatically install system dependencies from `packages.txt`
-- **Data Persistence**: Streamlit Cloud doesn't persist data between deployments. Consider using:
-  - External database (PostgreSQL, MongoDB)
-  - Cloud storage (AWS S3, Google Cloud Storage)
-  - Streamlit's built-in file upload for temporary data
-- **Environment Variables**: Set secrets in Streamlit Cloud dashboard for sensitive data
-- **Resource Limits**: Free tier has CPU and memory limitations
+### Deployment
+- **Docker** - Containerization
+- **Streamlit Cloud** - Cloud deployment
 
 ## Configuration
 
