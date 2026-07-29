@@ -1,0 +1,51 @@
+# Core dependencies
+pandas
+numpy
+yfinance
+pandas-datareader
+
+# Machine Learning
+scikit-learn
+xgboost
+lightgbm
+catboost
+
+# Hyperparameter Optimization
+optuna
+
+# Model Interpretation (optional - may have compatibility issues)
+# shap
+
+# NLP and Text Processing
+transformers
+torch
+sentencepiece
+newspaper3k
+feedparser
+beautifulsoup4
+requests
+
+# Economic Calendar
+forex-calendar-wrapper
+
+# Technical Analysis
+ta
+
+# Visualization
+plotly
+streamlit
+
+# Database
+sqlalchemy
+
+# Utilities
+python-dotenv
+joblib
+tqdm
+
+# Jupyter
+jupyter
+ipykernel
+
+# Additional dependencies for Streamlit Cloud
+TA-Lib
