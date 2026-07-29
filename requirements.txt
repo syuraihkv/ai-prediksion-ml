@@ -16,12 +16,12 @@ optuna>=3.0.0
 # Model Interpretation (optional - may have compatibility issues)
 # shap
 
-# NLP and Text Processing
-transformers>=4.20.0
-torch>=1.10.0
-sentencepiece>=0.1.96
-newspaper3k>=0.2.8
-feedparser>=6.0.8
+# NLP and Text Processing (commented out due to Python 3.14 compatibility issues)
+# transformers>=4.20.0
+# torch>=1.10.0
+# sentencepiece>=0.1.96
+# newspaper3k>=0.2.8
+# feedparser>=6.0.8
 beautifulsoup4>=4.10.0
 requests>=2.27.0
 
