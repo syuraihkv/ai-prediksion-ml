@@ -432,7 +432,12 @@ sys.path.append(str(Path(__file__).parent))
 
 from src.economic_api import EconomicAPI
 from src.market_api import MarketAPI
-from src.news_analyzer import NewsAnalyzer
+try:
+    from src.news_analyzer import NewsAnalyzer
+    NEWS_ANALYZER_AVAILABLE = True
+except ImportError:
+    NEWS_ANALYZER_AVAILABLE = False
+    NewsAnalyzer = None
 from src.predict import PredictionSystem
 from src.explanation import AIExplainer
 from src.database import DatabaseManager
@@ -447,7 +452,7 @@ if 'economic_api' not in st.session_state:
     st.session_state.economic_api = EconomicAPI()
 if 'market_api' not in st.session_state:
     st.session_state.market_api = MarketAPI()
-if 'news_analyzer' not in st.session_state:
+if NEWS_ANALYZER_AVAILABLE and 'news_analyzer' not in st.session_state:
     st.session_state.news_analyzer = NewsAnalyzer()
 if 'prediction_system' not in st.session_state:
     st.session_state.prediction_system = PredictionSystem()
@@ -955,6 +960,10 @@ def display_news_intelligence(asset: str):
     
     st.markdown(f"### 📰 News Intelligence - {asset}")
     st.markdown("*Financial news sentiment analysis and impact assessment*")
+    
+    if not NEWS_ANALYZER_AVAILABLE:
+        st.warning("News Intelligence features are currently unavailable due to dependency compatibility issues. Please check back later.")
+        return
     
     # Collect news (show all available news) with error handling
     try:
@@ -2461,9 +2470,13 @@ def display_fear_greed_index(asset: str):
     
     # Get sentiment data from news analyzer
     try:
-        sentiment_summary = st.session_state.news_analyzer.get_asset_sentiment_summary([])
-        overall_sentiment = sentiment_summary.get('overall_sentiment', 'neutral')
-        avg_confidence = sentiment_summary.get('average_confidence', 0.5)
+        if NEWS_ANALYZER_AVAILABLE:
+            sentiment_summary = st.session_state.news_analyzer.get_asset_sentiment_summary([])
+            overall_sentiment = sentiment_summary.get('overall_sentiment', 'neutral')
+            avg_confidence = sentiment_summary.get('average_confidence', 0.5)
+        else:
+            overall_sentiment = 'neutral'
+            avg_confidence = 0.5
     except Exception as e:
         logger.error(f"Error fetching sentiment data: {e}")
         overall_sentiment = 'neutral'
@@ -3274,8 +3287,8 @@ def main():
         """, unsafe_allow_html=True)
         
         # News API status with latency
-        news_status = "✅ Online" if st.session_state.news_analyzer else "❌ Offline"
-        news_latency = f"{np.random.randint(100, 500)} ms" if st.session_state.news_analyzer else "N/A"
+        news_status = "✅ Online" if NEWS_ANALYZER_AVAILABLE and st.session_state.news_analyzer else "❌ Offline"
+        news_latency = f"{np.random.randint(100, 500)} ms" if NEWS_ANALYZER_AVAILABLE and st.session_state.news_analyzer else "N/A"
         st.markdown(f"""
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
             <div>
