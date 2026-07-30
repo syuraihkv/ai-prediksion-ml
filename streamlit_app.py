@@ -546,12 +546,26 @@ def display_market_overview(asset: str):
         prediction_result = {
             'prediction': 'HOLD',
             'confidence': 0.5,
+            'is_ml_backed': False,
             'sentiment_summary': {
                 'overall_sentiment': 'neutral',
                 'average_confidence': 0.5
             }
         }
         st.session_state.cached_prediction = prediction_result
+
+    # Be explicit whenever the signal below is NOT coming from a trained ML
+    # model (e.g. no .joblib model has been trained/saved yet). Without this,
+    # the dashboard would show a BUY/SELL signal with a confidence score that
+    # looks identical to a real model output.
+    if not prediction_result.get('is_ml_backed', False):
+        st.warning(
+            "⚠️ Belum ada model ML terlatih ditemukan di `data/models/`. Sinyal di bawah ini "
+            "**bukan** prediksi dari model machine learning — hanya heuristik sederhana "
+            "berbasis sentimen berita (atau netral/HOLD). Latih model terlebih dahulu "
+            "(`src/train.py` atau `src/train_from_raw.py`) sebelum menggunakan sinyal ini "
+            "untuk keputusan investasi."
+        )
     
     # Hero section - redesigned with key information at a glance
     st.markdown("#### Key Metrics")

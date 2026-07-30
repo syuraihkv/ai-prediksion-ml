@@ -382,13 +382,17 @@ class PredictionSystem:
         # Use model comparison consensus for prediction
         model_comparison = self.compare_models(asset)
         
-        if model_comparison and 'error' not in model_comparison:
+        if model_comparison and 'error' not in model_comparison and model_comparison.get('total_models', 0) > 0:
             # Use consensus from model comparison
             prediction = model_comparison['consensus_signal']
             confidence = model_comparison['consensus_strength']
-            model_used = f"Consensus of {model_comparison['total_models']} models"
+            model_used = f"Consensus of {model_comparison['total_models']} trained model(s)"
+            is_ml_backed = True
         else:
-            # Fallback to sentiment-based prediction
+            # No trained ML model is available. Fall back to a news-sentiment
+            # heuristic only, and say so explicitly -- this is NOT an ML
+            # prediction and should not be displayed with the same confidence
+            # framing as a real model signal.
             if sentiment_summary['overall_sentiment'] == 'positive':
                 prediction = 'BUY'
                 confidence = sentiment_summary['average_confidence']
@@ -398,11 +402,13 @@ class PredictionSystem:
             else:
                 prediction = 'HOLD'
                 confidence = 0.5
-            model_used = "Sentiment-based fallback"
+            model_used = "No trained model available - sentiment-only heuristic (NOT an ML prediction)"
+            is_ml_backed = False
         
         # Build result
         result = {
             'asset': asset,
+            'is_ml_backed': is_ml_backed,
             'prediction': prediction,
             'confidence': confidence,
             'current_price': current_price,

@@ -11,6 +11,17 @@ This file contains all configurable parameters for the system including:
 
 from typing import List, Dict, Any
 from pathlib import Path
+import os
+
+try:
+    from dotenv import load_dotenv
+    # Load variables from a local .env file (if present) into the environment.
+    # This file is never committed - see .env.example for the template.
+    load_dotenv(Path(__file__).parent.parent / ".env")
+except ImportError:
+    # python-dotenv not installed: environment variables set another way
+    # (shell export, systemd, Docker, Streamlit Cloud secrets, etc.) still work.
+    pass
 
 # Project paths
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -188,23 +199,37 @@ MIN_CONFIDENCE_THRESHOLD: float = 0.5
 # Logging
 LOG_LEVEL: str = "INFO"
 
-# Crypto API Keys (Read from environment variables)
-import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
-
+# Crypto API Keys
+# IMPORTANT: these are loaded from environment variables / a local .env file,
+# never hardcoded. If you previously had real keys committed in this file,
+# treat them as compromised (this repo is public) - revoke/regenerate them
+# on each provider's dashboard, then put the NEW keys only in your local
+# .env file (which is git-ignored and never committed).
 COINMARKETCAP_API_KEY = os.getenv("COINMARKETCAP_API_KEY", "")
 COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY", "")
 
-# Economic Data API Keys (Read from environment variables)
+# Economic Data API Keys
 FRED_API_KEY = os.getenv("FRED_API_KEY", "")
 TWELVEDATA_API_KEY = os.getenv("TWELVEDATA_API_KEY", "")
 NEWS_DATA_API_KEY = os.getenv("NEWS_DATA_API_KEY", "")
 FINHUB_API_KEY = os.getenv("FINHUB_API_KEY", "")
 TRADING_ECONOMICS_API_KEY = os.getenv("TRADING_ECONOMICS_API_KEY", "")
 
-# GitHub API (Read from environment variables)
+# GitHub API
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
-GITHUB_REPO = os.getenv("GITHUB_REPO", "")
+GITHUB_REPO = os.getenv("GITHUB_REPO", "")  # format: username/repo
+
+_REQUIRED_KEYS_FOR_FULL_FUNCTIONALITY = [
+    "COINMARKETCAP_API_KEY", "COINGECKO_API_KEY", "FRED_API_KEY",
+    "TWELVEDATA_API_KEY", "NEWS_DATA_API_KEY",
+]
+_missing = [k for k in _REQUIRED_KEYS_FOR_FULL_FUNCTIONALITY if not globals()[k]]
+if _missing:
+    import warnings
+    warnings.warn(
+        "Missing API key(s) in environment: " + ", ".join(_missing) +
+        ". Copy .env.example to .env and fill in your own keys, or set them "
+        "as real environment variables. Features needing these keys will be "
+        "degraded or unavailable until then.",
+        stacklevel=2,
+    )
