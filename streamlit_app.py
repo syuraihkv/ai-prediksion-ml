@@ -938,16 +938,17 @@ def display_news_intelligence(asset: str):
     # Hero card with prediction summary (use cached prediction)
     if 'cached_prediction' in st.session_state and st.session_state.cached_prediction:
         prediction_result = st.session_state.cached_prediction
-        prediction = prediction_result.get('prediction', 'HOLD')
-        confidence = prediction_result.get('confidence', 0.5)
-        prediction_emoji = {'BUY': '🟢', 'SELL': '🔴', 'HOLD': '⚪'}.get(prediction, '❓')
-        prediction_class = 'buy-signal' if prediction == 'BUY' else 'sell-signal' if prediction == 'SELL' else 'premium-card'
-        
-        st.markdown(f"""
-        <div class="{prediction_class}">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h2 style="margin: 0; font-size: 1.8rem;">{prediction_emoji} {prediction}</h2>
+        if isinstance(prediction_result, dict):
+            prediction = prediction_result.get('prediction', 'HOLD')
+            confidence = prediction_result.get('confidence', 0.5)
+            prediction_emoji = {'BUY': '🟢', 'SELL': '🔴', 'HOLD': '⚪'}.get(prediction, '❓')
+            prediction_class = 'buy-signal' if prediction == 'BUY' else 'sell-signal' if prediction == 'SELL' else 'premium-card'
+            
+            st.markdown(f"""
+            <div class="{prediction_class}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.8rem;">{prediction_emoji} {prediction}</h2>
                     <p style="margin: 0.5rem 0 0 0; color: rgba(255,255,255,0.7); font-size: 0.9rem;">AI Signal</p>
                 </div>
                 <div style="text-align: right;">
@@ -1054,27 +1055,28 @@ def display_news_intelligence(asset: str):
 def display_ai_conclusion(asset: str):
     """Display AI conclusion page with narrative analysis."""
     # Hero card with prediction summary (use cached prediction)
-    if 'cached_prediction' in st.session_state:
+    if 'cached_prediction' in st.session_state and st.session_state.cached_prediction:
         prediction_result = st.session_state.cached_prediction
-        prediction = prediction_result.get('prediction', 'HOLD')
-        confidence = prediction_result.get('confidence', 0.5)
-        prediction_emoji = {'BUY': '🟢', 'SELL': '🔴', 'HOLD': '⚪'}.get(prediction, '❓')
-        prediction_class = 'buy-signal' if prediction == 'BUY' else 'sell-signal' if prediction == 'SELL' else 'premium-card'
-        
-        st.markdown(f"""
-        <div class="{prediction_class}">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h2 style="margin: 0; font-size: 1.8rem;">{prediction_emoji} {prediction}</h2>
-                    <p style="margin: 0.5rem 0 0 0; color: rgba(255,255,255,0.7); font-size: 0.9rem;">AI Signal</p>
-                </div>
-                <div style="text-align: right;">
-                    <h2 style="margin: 0; font-size: 1.8rem;">{confidence:.1%}</h2>
-                    <p style="margin: 0.5rem 0 0 0; color: rgba(255,255,255,0.7); font-size: 0.9rem;">Confidence</p>
+        if isinstance(prediction_result, dict):
+            prediction = prediction_result.get('prediction', 'HOLD')
+            confidence = prediction_result.get('confidence', 0.5)
+            prediction_emoji = {'BUY': '🟢', 'SELL': '🔴', 'HOLD': '⚪'}.get(prediction, '❓')
+            prediction_class = 'buy-signal' if prediction == 'BUY' else 'sell-signal' if prediction == 'SELL' else 'premium-card'
+            
+            st.markdown(f"""
+            <div class="{prediction_class}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.8rem;">{prediction_emoji} {prediction}</h2>
+                        <p style="margin: 0.5rem 0 0 0; color: rgba(255,255,255,0.7); font-size: 0.9rem;">AI Signal</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <h2 style="margin: 0; font-size: 1.8rem;">{confidence:.1%}</h2>
+                        <p style="margin: 0.5rem 0 0 0; color: rgba(255,255,255,0.7); font-size: 0.9rem;">Confidence</p>
+                    </div>
                 </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
     
     st.markdown(f"### 🤖 AI Analysis - {asset}")
     st.markdown("*Comprehensive AI analysis with reasoning and confidence assessment*")
@@ -1263,7 +1265,8 @@ def display_risk_management(asset: str):
         # Get prediction for direction
         prediction = 'BUY'  # Default, should be from cached prediction
         if 'cached_prediction' in st.session_state and st.session_state.cached_prediction:
-            prediction = st.session_state.cached_prediction.get('prediction', 'BUY')
+            if isinstance(st.session_state.cached_prediction, dict):
+                prediction = st.session_state.cached_prediction.get('prediction', 'BUY')
         
         risk_amount = account_balance * (risk_per_trade / 100)
         stop_loss_price = entry_price * (1 - stop_loss_pct / 100) if prediction == 'BUY' else entry_price * (1 + stop_loss_pct / 100)
@@ -2869,18 +2872,19 @@ def display_backtesting(asset: str):
 def display_personal_notes(asset: str):
     """Display personal notes page with SQLite storage."""
     # Hero card with prediction summary (use cached prediction)
-    if 'cached_prediction' in st.session_state:
+    if 'cached_prediction' in st.session_state and st.session_state.cached_prediction:
         prediction_result = st.session_state.cached_prediction
-        prediction = prediction_result.get('prediction', 'HOLD')
-        confidence = prediction_result.get('confidence', 0.5)
-        prediction_emoji = {'BUY': '🟢', 'SELL': '🔴', 'HOLD': '⚪'}.get(prediction, '❓')
-        prediction_class = 'buy-signal' if prediction == 'BUY' else 'sell-signal' if prediction == 'SELL' else 'premium-card'
-        
-        st.markdown(f"""
-        <div class="{prediction_class}">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h2 style="margin: 0; font-size: 1.8rem;">{prediction_emoji} {prediction}</h2>
+        if isinstance(prediction_result, dict):
+            prediction = prediction_result.get('prediction', 'HOLD')
+            confidence = prediction_result.get('confidence', 0.5)
+            prediction_emoji = {'BUY': '🟢', 'SELL': '🔴', 'HOLD': '⚪'}.get(prediction, '❓')
+            prediction_class = 'buy-signal' if prediction == 'BUY' else 'sell-signal' if prediction == 'SELL' else 'premium-card'
+            
+            st.markdown(f"""
+            <div class="{prediction_class}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.8rem;">{prediction_emoji} {prediction}</h2>
                     <p style="margin: 0.5rem 0 0 0; color: rgba(255,255,255,0.7); font-size: 0.9rem;">AI Signal</p>
                 </div>
                 <div style="text-align: right;">
@@ -2989,18 +2993,19 @@ def display_personal_notes(asset: str):
 def display_model_comparison(asset: str):
     """Display model comparison page."""
     # Hero card with prediction summary (use cached prediction)
-    if 'cached_prediction' in st.session_state:
+    if 'cached_prediction' in st.session_state and st.session_state.cached_prediction:
         prediction_result = st.session_state.cached_prediction
-        prediction = prediction_result.get('prediction', 'HOLD')
-        confidence = prediction_result.get('confidence', 0.5)
-        prediction_emoji = {'BUY': '🟢', 'SELL': '🔴', 'HOLD': '⚪'}.get(prediction, '❓')
-        prediction_class = 'buy-signal' if prediction == 'BUY' else 'sell-signal' if prediction == 'SELL' else 'premium-card'
-        
-        st.markdown(f"""
-        <div class="{prediction_class}">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h2 style="margin: 0; font-size: 1.8rem;">{prediction_emoji} {prediction}</h2>
+        if isinstance(prediction_result, dict):
+            prediction = prediction_result.get('prediction', 'HOLD')
+            confidence = prediction_result.get('confidence', 0.5)
+            prediction_emoji = {'BUY': '🟢', 'SELL': '🔴', 'HOLD': '⚪'}.get(prediction, '❓')
+            prediction_class = 'buy-signal' if prediction == 'BUY' else 'sell-signal' if prediction == 'SELL' else 'premium-card'
+            
+            st.markdown(f"""
+            <div class="{prediction_class}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.8rem;">{prediction_emoji} {prediction}</h2>
                     <p style="margin: 0.5rem 0 0 0; color: rgba(255,255,255,0.7); font-size: 0.9rem;">AI Signal</p>
                 </div>
                 <div style="text-align: right;">
