@@ -832,7 +832,28 @@ def display_market_overview(asset: str):
     # Volume Analysis section
     st.markdown("#### 📊 Volume Analysis")
     try:
-        volume_data = st.session_state.market_api.get_volume_data(asset)
+        # Check if method exists before calling
+        if hasattr(st.session_state.market_api, 'get_volume_data'):
+            volume_data = st.session_state.market_api.get_volume_data(asset)
+        else:
+            # Fallback: try to get volume from OHLCV data
+            try:
+                ohlcv_data = st.session_state.market_api.get_ohlcv_data(asset, period='1mo')
+                if not ohlcv_data.empty and 'Volume' in ohlcv_data.columns:
+                    current_volume = ohlcv_data['Volume'].iloc[-1]
+                    avg_volume = ohlcv_data['Volume'].mean()
+                    volume_change_pct = ((ohlcv_data['Volume'].iloc[-1] - ohlcv_data['Volume'].iloc[-2]) / ohlcv_data['Volume'].iloc[-2] * 100) if len(ohlcv_data) >= 2 else 0
+                    volume_data = {
+                        'current_volume': current_volume,
+                        'avg_volume': avg_volume,
+                        'volume_change_pct': volume_change_pct
+                    }
+                else:
+                    volume_data = None
+            except Exception as e:
+                logger.error(f"Error getting volume from OHLCV: {e}")
+                volume_data = None
+        
         if volume_data:
             col1, col2, col3, col4 = st.columns(4)
             
@@ -866,7 +887,9 @@ def display_market_overview(asset: str):
     for i, tf in enumerate(timeframes):
         with [col1, col2, col3][i]:
             try:
-                tf_indicators = st.session_state.market_api.get_technical_indicators(asset, timeframe=tf)
+                # get_technical_indicators doesn't support timeframe parameter
+                # Use default indicators for now
+                tf_indicators = st.session_state.market_api.get_technical_indicators(asset)
                 if tf_indicators:
                     trend = tf_indicators.get('trend', 'NEUTRAL')
                     trend_emoji = {'BULLISH': '📈', 'BEARISH': '📉', 'NEUTRAL': '➡️'}.get(trend, '❓')
@@ -1517,19 +1540,19 @@ def display_technical_analysis(asset: str):
     st.markdown("#### 📈 Price Chart with Indicators")
     
     try:
-        # Get historical price data
-        historical_data = st.session_state.market_api.get_historical_data(asset, period='1D')
+        # Get historical price data - use get_ohlcv_data instead of get_historical_data
+        historical_data = st.session_state.market_api.get_ohlcv_data(asset, period='1mo')
         
-        if historical_data and len(historical_data) > 0:
+        if not historical_data.empty and len(historical_data) > 0:
             import matplotlib.pyplot as plt
             import matplotlib.dates as mdates
             
             fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), gridspec_kw={'height_ratios': [3, 1]})
             
-            # Parse data
-            timestamps = [pd.to_datetime(d['timestamp']) for d in historical_data]
-            prices = [float(d['close']) for d in historical_data]
-            volumes = [float(d.get('volume', 0)) for d in historical_data]
+            # Parse data from DataFrame
+            timestamps = historical_data.index
+            prices = historical_data['Close'].values
+            volumes = historical_data['Volume'].values if 'Volume' in historical_data.columns else [0] * len(historical_data)
             
             # Price chart
             ax1.plot(timestamps, prices, linewidth=2, color='#6366f1', label='Price')
@@ -1987,7 +2010,27 @@ def display_volume_analysis(asset: str):
     
     # Get volume data from market API
     try:
-        volume_data = st.session_state.market_api.get_volume_data(asset)
+        # Check if method exists before calling
+        if hasattr(st.session_state.market_api, 'get_volume_data'):
+            volume_data = st.session_state.market_api.get_volume_data(asset)
+        else:
+            # Fallback: try to get volume from OHLCV data
+            try:
+                ohlcv_data = st.session_state.market_api.get_ohlcv_data(asset, period='1mo')
+                if not ohlcv_data.empty and 'Volume' in ohlcv_data.columns:
+                    current_volume = ohlcv_data['Volume'].iloc[-1]
+                    avg_volume = ohlcv_data['Volume'].mean()
+                    volume_change_pct = ((ohlcv_data['Volume'].iloc[-1] - ohlcv_data['Volume'].iloc[-2]) / ohlcv_data['Volume'].iloc[-2] * 100) if len(ohlcv_data) >= 2 else 0
+                    volume_data = {
+                        'current_volume': current_volume,
+                        'avg_volume': avg_volume,
+                        'volume_change_pct': volume_change_pct
+                    }
+                else:
+                    volume_data = None
+            except Exception as e:
+                logger.error(f"Error getting volume from OHLCV: {e}")
+                volume_data = None
     except Exception as e:
         logger.error(f"Error fetching volume data: {e}")
         volume_data = None
@@ -2111,18 +2154,18 @@ def display_volume_analysis(asset: str):
     st.markdown("#### 📊 Volume Chart")
     
     try:
-        # Get historical volume data
-        historical_data = st.session_state.market_api.get_historical_data(asset, period='1D')
+        # Get historical volume data - use get_ohlcv_data instead of get_historical_data
+        historical_data = st.session_state.market_api.get_ohlcv_data(asset, period='1mo')
         
-        if historical_data and len(historical_data) > 0:
+        if not historical_data.empty and len(historical_data) > 0:
             import matplotlib.pyplot as plt
             
             fig, ax = plt.subplots(figsize=(12, 4))
             
-            # Parse data
-            timestamps = [pd.to_datetime(d['timestamp']) for d in historical_data]
-            volumes = [float(d.get('volume', 0)) for d in historical_data]
-            prices = [float(d['close']) for d in historical_data]
+            # Parse data from DataFrame
+            timestamps = historical_data.index
+            volumes = historical_data['Volume'].values if 'Volume' in historical_data.columns else [0] * len(historical_data)
+            prices = historical_data['Close'].values
             
             # Volume bars with color based on price direction
             colors = ['#34d399' if prices[i] >= prices[i-1] else '#f87171' for i in range(1, len(prices))]
@@ -2171,7 +2214,9 @@ def display_multitimeframe_analysis(asset: str):
     timeframe_data = {}
     for tf in timeframes:
         try:
-            tf_indicators = st.session_state.market_api.get_technical_indicators(asset, timeframe=tf)
+            # get_technical_indicators doesn't support timeframe parameter
+            # Use default indicators for now
+            tf_indicators = st.session_state.market_api.get_technical_indicators(asset)
             timeframe_data[tf] = tf_indicators
         except Exception as e:
             logger.error(f"Error fetching {tf} indicators: {e}")
@@ -2341,13 +2386,15 @@ def display_correlation_analysis(asset: str):
     st.markdown(f"### 🔗 Correlation Analysis - {asset}")
     st.markdown("*Analyze correlation with other assets for diversification*")
     
-    # Define related assets
+    # Define related assets - use asset names that MarketAPI recognizes
     related_assets = {
-        'XAU/USD': ['BTC/USD', 'EUR/USD', 'USD/JPY', 'US10Y'],
-        'BTC/USD': ['XAU/USD', 'ETH/USD', 'SPX500', 'US10Y']
+        'XAU': ['BTC', 'EUR', 'USD', 'US10Y'],
+        'BTC': ['XAU', 'ETH', 'SPX', 'US10Y']
     }
     
-    assets_to_compare = related_assets.get(asset, ['BTC/USD', 'EUR/USD', 'USD/JPY'])
+    # Normalize asset name (remove /USD suffix if present)
+    asset_normalized = asset.replace('/USD', '').replace('/', '')
+    assets_to_compare = related_assets.get(asset_normalized, ['BTC', 'EUR', 'USD'])
     
     st.markdown("#### 📊 Correlation Matrix")
     
@@ -2358,7 +2405,7 @@ def display_correlation_analysis(asset: str):
         price_data = {}
         for related_asset in assets_to_compare:
             try:
-                data = st.session_state.market_api.get_ohlcv_data(related_asset.replace('/', ''), period='1mo')
+                data = st.session_state.market_api.get_ohlcv_data(related_asset, period='1mo')
                 if not data.empty:
                     price_data[related_asset] = data['Close']
             except Exception as e:
@@ -2366,11 +2413,11 @@ def display_correlation_analysis(asset: str):
         
         # Get main asset data
         try:
-            main_data = st.session_state.market_api.get_ohlcv_data(asset.replace('/', ''), period='1mo')
+            main_data = st.session_state.market_api.get_ohlcv_data(asset_normalized, period='1mo')
             if not main_data.empty:
-                price_data[asset] = main_data['Close']
+                price_data[asset_normalized] = main_data['Close']
         except Exception as e:
-            logger.error(f"Error fetching data for {asset}: {e}")
+            logger.error(f"Error fetching data for {asset_normalized}: {e}")
         
         # Calculate correlations if we have enough data
         if len(price_data) >= 2:
@@ -2380,8 +2427,8 @@ def display_correlation_analysis(asset: str):
             
             # Extract correlations for display
             for related_asset in assets_to_compare:
-                if related_asset in corr_matrix_data.columns and asset in corr_matrix_data.index:
-                    correlations[related_asset] = corr_matrix_data.loc[asset, related_asset]
+                if related_asset in corr_matrix_data.columns and asset_normalized in corr_matrix_data.index:
+                    correlations[related_asset] = corr_matrix_data.loc[asset_normalized, related_asset]
         else:
             st.warning("⚠️ Insufficient price data available for correlation analysis. Please check API connectivity.")
             return
@@ -2569,12 +2616,18 @@ def display_fear_greed_index(asset: str):
         historical_fg = []
         try:
             # Check if we have historical sentiment data in database
-            historical_data = st.session_state.database.get_historical_sentiment(asset, days=7)
-            if historical_data and len(historical_data) >= 7:
-                historical_fg = [data.get('fear_greed_index', 50) for data in historical_data[-7:]]
+            # Note: get_historical_sentiment method may not exist in current database implementation
+            if hasattr(st.session_state.database, 'get_historical_sentiment'):
+                historical_data = st.session_state.database.get_historical_sentiment(asset, days=7)
+                if historical_data and len(historical_data) >= 7:
+                    historical_fg = [data.get('fear_greed_index', 50) for data in historical_data[-7:]]
+                else:
+                    # If no historical data, show warning and don't display fake data
+                    st.warning("⚠️ Historical Fear/Greed data not available. Need more prediction history to show trends.")
+                    historical_fg = None
             else:
-                # If no historical data, show warning and don't display fake data
-                st.warning("⚠️ Historical Fear/Greed data not available. Need more prediction history to show trends.")
+                # Method doesn't exist, show warning
+                st.warning("⚠️ Historical Fear/Greed tracking not yet implemented. This feature requires database schema updates.")
                 historical_fg = None
         except Exception as e:
             logger.error(f"Error fetching historical sentiment data: {e}")
@@ -2699,13 +2752,13 @@ def display_backtesting(asset: str):
     if st.button("🚀 Run Backtest"):
         with st.spinner("Running backtest with historical data..."):
             try:
-                # Get historical data for backtesting
-                historical_data = st.session_state.market_api.get_historical_data(asset, period='90D')
+                # Get historical data for backtesting - use get_ohlcv_data instead of get_historical_data
+                historical_data = st.session_state.market_api.get_ohlcv_data(asset, period='3mo')
                 
-                if historical_data and len(historical_data) > 0:
+                if not historical_data.empty and len(historical_data) > 0:
                     # Generate actual backtest based on historical data
-                    prices = [float(d['close']) for d in historical_data]
-                    timestamps = [pd.to_datetime(d['timestamp']) for d in historical_data]
+                    prices = historical_data['Close'].values
+                    timestamps = historical_data.index
                     
                     # Simulate trades based on strategy
                     trades = []
@@ -3467,7 +3520,7 @@ def main():
     tabs = ["Market Analysis", "News & Events", "AI & Probability", "Performance", "Tools"]
     
     current_tab = st.radio(
-        "",
+        "Select Tab",
         tabs,
         index=tabs.index(st.session_state.current_tab) if st.session_state.current_tab in tabs else 0,
         label_visibility="collapsed",
