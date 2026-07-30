@@ -2670,14 +2670,17 @@ def display_backtesting(asset: str):
                         price_change = (prices[i] - prices[i-1]) / prices[i-1]
                         
                         # Simple strategy: follow price direction with risk management
-                        if price_change > 0.001:  # 0.1% up
-                            # Buy signal
+                        if price_change > 0.001:  # 0.1% up - BUY signal
+                            # Buy signal - profit if price goes up
                             trade_return = price_change * (1 - stop_loss_pct/100)
                             capital += capital * trade_return
-                        elif price_change < -0.001:  # 0.1% down
-                            # Sell signal
+                        elif price_change < -0.001:  # 0.1% down - SELL signal
+                            # Sell signal - profit if price goes down (short position)
                             trade_return = abs(price_change) * (1 - stop_loss_pct/100)
                             capital += capital * trade_return
+                        else:
+                            # No trade - small time decay or transaction cost
+                            capital *= 0.9999
                         
                         equity_curve.append(capital)
                         trades.append(capital - equity_curve[-2])
@@ -2705,46 +2708,13 @@ def display_backtesting(asset: str):
                     avg_win = np.mean([t for t in trades if t > 0]) if winning_trades > 0 else 0
                     avg_loss = abs(np.mean([t for t in trades if t < 0])) if losing_trades > 0 else 0
                 else:
-                    # Fallback to simulated data if historical data unavailable
-                    import random
-                    total_trades = random.randint(50, 150)
-                    winning_trades = int(total_trades * random.uniform(0.45, 0.65))
-                    losing_trades = total_trades - winning_trades
-                    win_rate = winning_trades / total_trades
-                    avg_win = random.uniform(150, 300)
-                    avg_loss = random.uniform(80, 150)
-                    total_profit = (winning_trades * avg_win) - (losing_trades * avg_loss)
-                    capital = initial_capital + total_profit
-                    total_return = (capital / initial_capital - 1) * 100
-                    max_drawdown = random.uniform(5, 25)
-                    sharpe_ratio = random.uniform(0.5, 2.5)
-                    equity_curve = [initial_capital]
-                    for i in range(total_trades):
-                        if i < winning_trades:
-                            equity_curve.append(equity_curve[-1] + avg_win)
-                        else:
-                            equity_curve.append(equity_curve[-1] - avg_loss)
+                    # Historical data unavailable - show error message
+                    st.error("⚠️ Historical data not available for backtesting. Please ensure data files exist in data/raw/ directory.")
+                    return
             except Exception as e:
                 logger.error(f"Error in backtesting: {e}")
-                # Fallback to simulated data
-                import random
-                total_trades = random.randint(50, 150)
-                winning_trades = int(total_trades * random.uniform(0.45, 0.65))
-                losing_trades = total_trades - winning_trades
-                win_rate = winning_trades / total_trades
-                avg_win = random.uniform(150, 300)
-                avg_loss = random.uniform(80, 150)
-                total_profit = (winning_trades * avg_win) - (losing_trades * avg_loss)
-                capital = initial_capital + total_profit
-                total_return = (capital / initial_capital - 1) * 100
-                max_drawdown = random.uniform(5, 25)
-                sharpe_ratio = random.uniform(0.5, 2.5)
-                equity_curve = [initial_capital]
-                for i in range(total_trades):
-                    if i < winning_trades:
-                        equity_curve.append(equity_curve[-1] + avg_win)
-                    else:
-                        equity_curve.append(equity_curve[-1] - avg_loss)
+                st.error(f"⚠️ Error in backtesting: {str(e)}. Please check data files and try again.")
+                return
             
             # Display results
             st.markdown("#### 📊 Backtest Results")
@@ -3153,6 +3123,15 @@ def display_historical_accuracy(asset: str):
     
     st.markdown(f"### 📈 Historical Accuracy - {asset}")
     st.markdown("*Prediction performance tracking and analysis*")
+    
+    # Check if models are trained
+    try:
+        models = st.session_state.prediction_system.load_all_models()
+        if not models or all(not hasattr(model, 'coef_') and not hasattr(model, 'feature_importances_') for model in models.values()):
+            st.warning("⚠️ **WARNING: No trained models found.** Predictions may be from untrained models. Please train models using `src/train.py` before using for trading decisions.")
+    except Exception as e:
+        logger.error(f"Error checking model status: {e}")
+        st.warning("⚠️ **WARNING: Unable to verify model training status.** Please ensure models are properly trained before using for trading decisions.")
     
     # Get accuracy statistics with error handling
     try:

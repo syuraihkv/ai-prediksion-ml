@@ -159,12 +159,10 @@ class PredictionSystem:
         
         for model_name, model in models.items():
             try:
-                # For models that need training (default models)
+                # Check if model is trained
                 if not hasattr(model, 'coef_') and not hasattr(model, 'feature_importances_'):
-                    # Train with dummy data for demonstration
-                    dummy_X = np.random.rand(100, len(feature_vector))
-                    dummy_y = np.random.randint(0, 2, 100)
-                    model.fit(dummy_X, dummy_y)
+                    self.logger.warning(f"Model {model_name} is not trained. Skipping.")
+                    continue
                 
                 # Make prediction
                 prediction_proba = model.predict_proba([feature_vector])[0]

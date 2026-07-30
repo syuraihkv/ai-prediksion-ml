@@ -288,11 +288,14 @@ class NewsImpactFeatureEngineer:
         """
         Combine all feature types into single DataFrame.
         
+        ⚠️ WARNING: This function broadcasts current economic/news/indicator values
+        to all historical rows. For training, use time-aligned data to avoid look-ahead bias.
+        
         Args:
-            technical_df: Technical features
-            economic_df: Economic features
-            news_df: News features
-            indicator_df: Market indicator features
+            technical_df: Technical features (time series)
+            economic_df: Economic features (current values)
+            news_df: News features (current values)
+            indicator_df: Market indicator features (current values)
         
         Returns:
             Combined feature DataFrame
@@ -301,19 +304,25 @@ class NewsImpactFeatureEngineer:
         combined = technical_df.copy()
         
         # Add economic features (broadcast to all rows)
+        # ⚠️ For training, ensure economic data is time-aligned, not broadcasted
         if not economic_df.empty:
             for col in economic_df.columns:
                 combined[col] = economic_df[col].iloc[0] if len(economic_df) > 0 else 0
+            self.logger.warning("Economic features broadcasted to all rows - ensure this is for real-time prediction only")
         
         # Add news features (broadcast to all rows)
+        # ⚠️ For training, ensure news data is time-aligned, not broadcasted
         if not news_df.empty:
             for col in news_df.columns:
                 combined[col] = news_df[col].iloc[0] if len(news_df) > 0 else 0
+            self.logger.warning("News features broadcasted to all rows - ensure this is for real-time prediction only")
         
         # Add indicator features (broadcast to all rows)
+        # ⚠️ For training, ensure indicator data is time-aligned, not broadcasted
         if not indicator_df.empty:
             for col in indicator_df.columns:
                 combined[col] = indicator_df[col].iloc[0] if len(indicator_df) > 0 else 0
+            self.logger.warning("Indicator features broadcasted to all rows - ensure this is for real-time prediction only")
         
         self.logger.info(f"Combined features. Final shape: {combined.shape}")
         

@@ -296,12 +296,27 @@ class ModelTrainer:
             except Exception as e:
                 self.logger.error(f"Error training {model_name}: {e}")
         
-        # Select best model based on accuracy
+        # Select best model based on composite score (accuracy + precision + recall)
         if results:
-            best_model_name = max(results.keys(), key=lambda x: results[x]['metrics']['accuracy'])
+            # Calculate composite score for each model
+            def composite_score(metrics):
+                # Weighted combination of metrics
+                # For trading, precision and recall are as important as accuracy
+                weights = {'accuracy': 0.4, 'precision': 0.3, 'recall': 0.3}
+                score = (
+                    weights['accuracy'] * metrics['accuracy'] +
+                    weights['precision'] * metrics['precision'] +
+                    weights['recall'] * metrics['recall']
+                )
+                # Add AUC if available
+                if metrics.get('auc') is not None:
+                    score = (score + metrics['auc']) / 2
+                return score
+            
+            best_model_name = max(results.keys(), key=lambda x: composite_score(results[x]['metrics']))
             self.best_model = results[best_model_name]['model']
             self.best_model_name = best_model_name
-            self.logger.info(f"Best model: {best_model_name}")
+            self.logger.info(f"Best model: {best_model_name} (Composite Score: {composite_score(results[best_model_name]['metrics']):.4f})")
         
         return results
     
