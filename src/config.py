@@ -188,17 +188,23 @@ MIN_CONFIDENCE_THRESHOLD: float = 0.5
 # Logging
 LOG_LEVEL: str = "INFO"
 
-# Crypto API Keys
-COINMARKETCAP_API_KEY = "5cf206e768e1445b811a2562da35d5de"
-COINGECKO_API_KEY = "CG-U4ksv2RGf4UWugZCL7Kypaza"
+# Crypto API Keys (Read from environment variables)
+import os
+from dotenv import load_dotenv
 
-# Economic Data API Keys
-FRED_API_KEY = "f5b5b001fff1429daa32c605126c3524"
-TWELVEDATA_API_KEY = "pub_88c85a1c6f064b8196bb5aa2ad61e7f3"
-NEWS_DATA_API_KEY = "d9kmtr1r01qshkrnfug0d9kmtr1r01qshkrnfugg"
-FINHUB_API_KEY = ""  # To be added
-TRADING_ECONOMICS_API_KEY = ""  # To be added
+# Load environment variables from .env file
+load_dotenv()
 
-# GitHub API
-GITHUB_TOKEN = ""  # To be added
-GITHUB_REPO = ""  # To be added (format: username/repo)
+COINMARKETCAP_API_KEY = os.getenv("COINMARKETCAP_API_KEY", "")
+COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY", "")
+
+# Economic Data API Keys (Read from environment variables)
+FRED_API_KEY = os.getenv("FRED_API_KEY", "")
+TWELVEDATA_API_KEY = os.getenv("TWELVEDATA_API_KEY", "")
+NEWS_DATA_API_KEY = os.getenv("NEWS_DATA_API_KEY", "")
+FINHUB_API_KEY = os.getenv("FINHUB_API_KEY", "")
+TRADING_ECONOMICS_API_KEY = os.getenv("TRADING_ECONOMICS_API_KEY", "")
+
+# GitHub API (Read from environment variables)
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
+GITHUB_REPO = os.getenv("GITHUB_REPO", "")

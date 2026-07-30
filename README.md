@@ -117,7 +117,23 @@ cd ai-prediksion-ml
 pip install -r requirements.txt
 ```
 
-3. **Run the dashboard**
+3. **Configure API keys**
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env file and add your actual API keys
+# Required API keys:
+# - COINMARKETCAP_API_KEY
+# - COINGECKO_API_KEY
+# - FRED_API_KEY
+# - TWELVEDATA_API_KEY
+# - NEWS_DATA_API_KEY
+```
+
+**⚠️ Security Notice:** Never commit the `.env` file to version control. It contains sensitive API keys and is already included in `.gitignore`.
+
+4. **Run the dashboard**
 ```bash
 streamlit run streamlit_app.py
 ```
