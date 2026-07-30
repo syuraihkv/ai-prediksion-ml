@@ -2295,15 +2295,23 @@ def display_correlation_analysis(asset: str):
     st.markdown(f"### 🔗 Correlation Analysis - {asset}")
     st.markdown("*Analyze correlation with other assets for diversification*")
     
-    # Define related assets - use asset names that MarketAPI recognizes
+    # Define related assets - use yfinance ticker symbols
     related_assets = {
-        'XAU': ['BTC', 'EUR', 'USD', 'US10Y'],
-        'BTC': ['XAU', 'ETH', 'SPX', 'US10Y']
+        'XAU': ['GC=F', 'BTC-USD', 'EURUSD=X', 'USDJPY=X', '^TNX'],
+        'BTC': ['GC=F', 'ETH-USD', '^GSPC', '^TNX']
     }
     
     # Normalize asset name (remove /USD suffix if present)
     asset_normalized = asset.replace('/USD', '').replace('/', '')
-    assets_to_compare = related_assets.get(asset_normalized, ['BTC', 'EUR', 'USD'])
+    
+    # Map asset to yfinance symbol
+    asset_ticker_map = {
+        'XAU': 'GC=F',
+        'BTC': 'BTC-USD'
+    }
+    asset_ticker = asset_ticker_map.get(asset_normalized, asset_normalized)
+    
+    assets_to_compare = related_assets.get(asset_normalized, ['BTC-USD', 'EURUSD=X', 'USDJPY=X'])
     
     st.markdown("#### 📊 Correlation Matrix")
     
@@ -2322,11 +2330,11 @@ def display_correlation_analysis(asset: str):
         
         # Get main asset data
         try:
-            main_data = st.session_state.market_api.get_ohlcv_data(asset_normalized, period='1mo')
+            main_data = st.session_state.market_api.get_ohlcv_data(asset_ticker, period='1mo')
             if not main_data.empty:
-                price_data[asset_normalized] = main_data['Close']
+                price_data[asset_ticker] = main_data['Close']
         except Exception as e:
-            logger.error(f"Error fetching data for {asset_normalized}: {e}")
+            logger.error(f"Error fetching data for {asset_ticker}: {e}")
         
         # Calculate correlations if we have enough data
         if len(price_data) >= 2:
@@ -2336,10 +2344,10 @@ def display_correlation_analysis(asset: str):
             
             # Extract correlations for display
             for related_asset in assets_to_compare:
-                if related_asset in corr_matrix_data.columns and asset_normalized in corr_matrix_data.index:
-                    correlations[related_asset] = corr_matrix_data.loc[asset_normalized, related_asset]
+                if related_asset in corr_matrix_data.columns and asset_ticker in corr_matrix_data.index:
+                    correlations[related_asset] = corr_matrix_data.loc[asset_ticker, related_asset]
         else:
-            st.warning("⚠️ Insufficient price data available for correlation analysis. Please check API connectivity.")
+            st.warning("⚠️ Insufficient price data available for correlation analysis. Some assets may not be available through current data sources.")
             return
             
     except Exception as e:

@@ -72,18 +72,19 @@ class MarketAPI:
         Get OHLCV data for specified asset.
         
         Args:
-            asset: Asset symbol ('XAU' or 'BTC')
+            asset: Asset symbol ('XAU', 'BTC', or any yfinance ticker like 'GC=F', 'EURUSD=X')
             period: Time period ('1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y')
             interval: Data interval ('1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo')
         
         Returns:
             DataFrame with OHLCV data
         """
-        if asset not in self.assets:
-            self.logger.error(f"Unknown asset: {asset}")
-            return pd.DataFrame()
-        
-        ticker = self.assets[asset]['ticker']
+        # Check if asset is in predefined assets, otherwise use it directly as ticker
+        if asset in self.assets:
+            ticker = self.assets[asset]['ticker']
+        else:
+            # Use asset directly as yfinance ticker (for correlation analysis with other assets)
+            ticker = asset
         
         try:
             data = yf.download(ticker, period=period, interval=interval, progress=False)
@@ -93,7 +94,7 @@ class MarketAPI:
                 data = data[0] if data else pd.DataFrame()
             
             if data.empty:
-                self.logger.warning(f"No data retrieved for {asset}")
+                self.logger.warning(f"No data retrieved for {asset} (ticker: {ticker})")
                 return pd.DataFrame()
             
             # Standardize column names
@@ -102,11 +103,11 @@ class MarketAPI:
             else:
                 data.columns = [col.lower() for col in data.columns]
             
-            self.logger.info(f"Retrieved {len(data)} data points for {asset}")
+            self.logger.info(f"Retrieved {len(data)} data points for {asset} (ticker: {ticker})")
             return data
             
         except Exception as e:
-            self.logger.error(f"Error fetching data for {asset}: {e}")
+            self.logger.error(f"Error fetching data for {asset} (ticker: {ticker}): {e}")
             return pd.DataFrame()
     
     def get_current_price(self, asset: str) -> Optional[float]:
