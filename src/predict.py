@@ -22,7 +22,12 @@ from datetime import datetime
 
 from src.economic_api import EconomicAPI
 from src.market_api import MarketAPI
-from src.news_analyzer import NewsAnalyzer
+try:
+    from src.news_analyzer import NewsAnalyzer
+    NEWS_ANALYZER_AVAILABLE = True
+except ImportError:
+    NEWS_ANALYZER_AVAILABLE = False
+    NewsAnalyzer = None
 from src.feature_engineering_new import NewsImpactFeatureEngineer
 from src.utils import setup_logger
 
@@ -55,7 +60,7 @@ class PredictionSystem:
         # Initialize components
         self.economic_api = EconomicAPI()
         self.market_api = MarketAPI()
-        self.news_analyzer = NewsAnalyzer()
+        self.news_analyzer = NewsAnalyzer() if NEWS_ANALYZER_AVAILABLE else None
         self.feature_engineer = NewsImpactFeatureEngineer()
         
         # Load best model

@@ -21,15 +21,16 @@ optuna>=3.0.0
 # torch>=1.10.0
 # sentencepiece>=0.1.96
 # newspaper3k>=0.2.8
-# feedparser>=6.0.8
+feedparser>=6.0.8
 beautifulsoup4>=4.10.0
 requests>=2.27.0
+deep-translator>=1.10.0
 
 # Economic Calendar
 # forex-calendar-wrapper  # Commented out - may have installation issues
 
-# Technical Analysis
-ta>=0.10.0
+lxml>=4.9.0
+lxml_html_clean
 
 # Visualization
 plotly>=5.10.0

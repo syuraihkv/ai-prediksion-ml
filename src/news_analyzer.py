@@ -21,9 +21,19 @@ from datetime import datetime, timedelta
 import feedparser
 import requests
 from bs4 import BeautifulSoup
-from newspaper import Article
+try:
+    from newspaper import Article
+    NEWSPAPER_AVAILABLE = True
+except ImportError:
+    NEWSPAPER_AVAILABLE = False
+    Article = None
 import time
-from deep_translator import GoogleTranslator
+try:
+    from deep_translator import GoogleTranslator
+    DEEP_TRANSLATOR_AVAILABLE = True
+except ImportError:
+    DEEP_TRANSLATOR_AVAILABLE = False
+    GoogleTranslator = None
 
 from src.utils import setup_logger
 
@@ -220,10 +230,14 @@ class NewsAnalyzer:
             article['impact_direction'] = self._determine_impact_direction(text, sentiment_result['sentiment'])
             
             # Translate to Indonesian
-            try:
-                title_id = self.translator.translate(article.get('title', ''))[:200]  # Limit length
-                summary_id = self.translator.translate(article.get('summary', ''))[:300]  # Limit length
-            except:
+            if DEEP_TRANSLATOR_AVAILABLE:
+                try:
+                    title_id = self.translator.translate(article.get('title', ''))[:200]  # Limit length
+                    summary_id = self.translator.translate(article.get('summary', ''))[:300]  # Limit length
+                except:
+                    title_id = article.get('title', '')
+                    summary_id = article.get('summary', '')
+            else:
                 title_id = article.get('title', '')
                 summary_id = article.get('summary', '')
             
