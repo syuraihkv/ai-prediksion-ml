@@ -1,256 +1,275 @@
-# 🤖 AI Prediction ML Trading System
+# 🤖 AI Market Prediction System
 
 <div align="center">
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.0+-red.svg)
+![Next.js](https://img.shields.io/badge/Next.js-14.0+-black.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Status](https://img.shields.io/badge/Status-Active-success.svg)
 
-**Advanced Machine Learning System for Financial Market Prediction**
+**Professional AI-Powered Market Prediction Platform**
 
-Comprehensive trading dashboard with AI-powered predictions, technical analysis, and real-time monitoring
+Modern web application with machine learning predictions, real-time market data, and advanced analytics
 
-[🚀 Features](#-features) • [📊 Dashboard](#-interactive-dashboard) • [🛠️ Installation](#️-installation) • [📖 Usage](#-usage) • [🎯 Tech Stack](#-tech-stack)
+[🚀 Features](#-features) • [🏗️ Architecture](#-architecture) • [🛠️ Installation](#️-installation) • [📖 Usage](#-usage) • [🎯 Tech Stack](#-tech-stack)
 
 </div>
 
 ## 🚀 Features
 
 ### 📊 Market Analysis
-- **Multi-Instrument Support**: Bitcoin (BTC/USD), Gold (XAU/USD), NASDAQ
-- **Multiple Timeframes**: 1H, 4H, Daily analysis
-- **Technical Indicators**: RSI, MACD, Moving Averages, ATR, Support/Resistance
-- **Volume Analysis**: Volume profile and market depth
-- **Multi-Timeframe Analysis**: Trend alignment across timeframes
-- **Correlation Analysis**: Asset correlation heatmap for diversification
+- **Multi-Instrument Support**: Bitcoin (BTC), Ethereum (ETH), Gold (XAU)
+- **Real-time Data**: Live market prices from yfinance
+- **Historical Charts**: Interactive price history with multiple timeframes
+- **Volume Analysis**: Volume profiles and market depth indicators
+- **Correlation Analysis**: Asset correlation heatmaps for diversification
 
 ### 🤖 AI & Prediction
 - **Multiple ML Models**: Logistic Regression, Random Forest, XGBoost, LightGBM, CatBoost
-- **Advanced Feature Engineering**: 20+ technical indicators
-- **Hyperparameter Optimization**: Optuna-based tuning
-- **Walk-Forward Validation**: Time-series aware validation
-- **Model Comparison**: Compare multiple models side-by-side
-- **Probability Calculator**: Expected Value, Kelly Criterion, Monte Carlo Simulation
+- **Ensemble Predictions**: Combines multiple models for better accuracy
+- **Probability Scores**: Confidence scores with up/down probabilities
+- **Feature Analysis**: Real-time feature importance display
+- **Model Comparison**: Compare performance across all models
 
-### 📰 News & Events
-- **News Intelligence**: Real-time news sentiment analysis
-- **Economic Calendar**: High-impact events with countdown
-- **Historical Impact Analysis**: Past event impact on markets
-- **Fear/Greed Index**: Market sentiment extremes analysis
+### 📈 Performance Tracking
+- **Accuracy Metrics**: Track model performance over time
+- **Performance Charts**: Visual accuracy trends
+- **Model Selection**: Automatic best model selection
+- **Historical Data**: Prediction history and results
 
-### 📈 Performance
-- **Historical Accuracy**: Track prediction performance over time
-- **Backtesting**: Historical backtesting with real data
-- **Performance Metrics**: Sharpe Ratio, Win Rate, Drawdown analysis
-- **Equity Curve**: Visual performance tracking
+## 🏗️ Architecture
 
-### 🛠️ Tools
-- **Personal Notes**: SQLite-based note-taking system
-- **Risk Management**: Position sizing and risk analysis
-- **Custom Configuration**: Flexible settings and parameters
+The project now features a modern **Next.js + FastAPI** architecture:
 
-## 📊 Interactive Dashboard
+```
+Frontend (Next.js + Tailwind CSS)
+    ↓ HTTP/REST API
+Backend (FastAPI + Python)
+    ↓
+ML Models (scikit-learn, XGBoost, LightGBM, CatBoost)
+    ↓
+Data Sources (yfinance, APIs)
+```
 
-The system features a modern, glass-morphism styled Streamlit dashboard with:
-
-- **Real-time Price Charts** with technical indicators overlay
-- **Volume Analysis** with color-coded volume bars
-- **Multi-Timeframe Comparison** charts
-- **Correlation Heatmaps** for asset relationships
-- **Economic Calendar** with historical impact visualization
-- **Fear/Greed Index** with historical trends
-- **Monte Carlo Simulation** for probability analysis
-- **Backtesting Results** with equity curves
-
-### Dashboard Tabs
-
-1. **Market Analysis** - Technical indicators, volume, multi-timeframe, correlation
-2. **News & Events** - News intelligence, economic calendar, fear/greed index
-3. **AI & Probability** - AI predictions, model comparison, probability calculator
-4. **Performance** - Historical accuracy, backtesting
-5. **Tools** - Personal notes
-
-## 🏗️ Project Structure
+### Project Structure
 
 ```
 financial_ml_trading/
+├── frontend/              # Next.js frontend application
+│   ├── app/
+│   │   ├── layout.tsx    # Root layout with navigation
+│   │   ├── page.tsx      # Home page
+│   │   ├── market/       # Live market data
+│   │   ├── prediction/   # AI predictions
+│   │   ├── models/       # Model comparison
+│   │   └── performance/  # Performance metrics
+│   ├── package.json      # Frontend dependencies
+│   ├── tailwind.config.js
+│   └── tsconfig.json
+├── backend/              # FastAPI backend application
+│   ├── main.py          # FastAPI application entry
+│   ├── src/
+│   │   ├── config.py    # Configuration settings
+│   │   ├── database.py  # Database models
+│   │   ├── schemas.py   # Pydantic schemas
+│   │   └── api/         # API endpoints
+│   │       ├── health.py
+│   │       ├── market.py
+│   │       ├── prediction.py
+│   │       └── models.py
+│   └── requirements.txt # Backend dependencies
 ├── data/
-│   └── raw/              # Historical price and macro data
-├── database/
-│   ├── predictions.db    # Prediction history
-│   └── notes.db          # Personal notes
-├── src/
-│   ├── config.py         # Configuration settings
-│   ├── market_api.py     # Market data API
-│   ├── news_analyzer.py  # News sentiment analysis
-│   ├── economic_api.py   # Economic calendar API
-│   ├── database.py       # Database operations
-│   ├── predict.py        # ML prediction engine
-│   ├── train.py          # Model training
-│   ├── feature_engineering_new.py
-│   └── utils.py          # Utility functions
-├── .streamlit/
-│   └── config.toml       # Streamlit configuration
-├── streamlit_app.py      # Main dashboard application
-├── requirements.txt      # Python dependencies
-└── README.md
+│   └── models/          # Trained ML models
+├── src/                 # Legacy Streamlit code
+│   ├── config.py
+│   ├── market_api.py
+│   ├── predict.py
+│   ├── train.py
+│   └── ...
+├── streamlit_app.py     # Legacy Streamlit dashboard
+└── requirements.txt     # Legacy dependencies
 ```
 
 ## 🛠️ Installation
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- pip package manager
+- **Frontend**: Node.js 18+ and npm/yarn
+- **Backend**: Python 3.8+ and pip
+- **Database**: PostgreSQL (optional, for production)
 
 ### Quick Start
 
-1. **Clone the repository**
+#### 1. Clone the repository
+
 ```bash
 git clone https://github.com/syuraihkv/ai-prediksion-ml.git
 cd ai-prediksion-ml
 ```
 
-2. **Install dependencies**
+#### 2. Backend Setup
+
 ```bash
+cd backend
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
 pip install -r requirements.txt
+
+# Set up environment variables
+cp ../.env.example .env
+# Edit .env with your API keys
+
+# Run backend
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-3. **Configure API keys**
+The backend API will be available at `http://localhost:8000`
+
+#### 3. Frontend Setup
+
 ```bash
-# Copy the example environment file
-cp .env.example .env
+cd frontend
 
-# Edit .env file and add your actual API keys
-# Required API keys:
-# - COINMARKETCAP_API_KEY
-# - COINGECKO_API_KEY
-# - FRED_API_KEY
-# - TWELVEDATA_API_KEY
-# - NEWS_DATA_API_KEY
+# Install dependencies
+npm install
+
+# Set environment variable
+echo NEXT_PUBLIC_API_URL=http://localhost:8000 > .env.local
+
+# Run development server
+npm run dev
 ```
 
-**⚠️ Security Notice:** Never commit the `.env` file to version control. It contains sensitive API keys and is already included in `.gitignore`.
+The frontend will be available at `http://localhost:3000`
 
-4. **Run the dashboard**
-```bash
-streamlit run streamlit_app.py
-```
+### API Endpoints
 
-The dashboard will be available at `http://localhost:8501`
+#### Health Check
+- `GET /api/health` - Check API status
 
-### TA-Lib Installation (Optional)
+#### Market Data
+- `GET /api/market/price/{asset}` - Get current price
+- `GET /api/market/history/{asset}` - Get historical data
+- `GET /api/market/assets` - List supported assets
 
-For advanced technical indicators, install TA-Lib:
+#### Predictions
+- `POST /api/prediction/predict` - Get AI prediction
 
-**Windows:**
-```bash
-Download from: http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-msvc.zip
-```
-
-**macOS:**
-```bash
-brew install ta-lib
-```
-
-**Linux:**
-```bash
-wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
-tar -xzf ta-lib-0.4.0-src.tar.gz
-cd ta-lib/
-./configure --prefix=/usr
-make
-sudo make install
-```
+#### Models
+- `GET /api/models/compare/{asset}` - Compare models
+- `GET /api/models/list` - List all models
+- `GET /api/models/performance/{asset}/{model_name}` - Get model performance
 
 ## 📖 Usage
 
-### Running the Dashboard
+### Running the Application
 
+1. **Start the backend** (in `backend/` directory):
 ```bash
-streamlit run streamlit_app.py
+uvicorn main:app --reload
 ```
 
-### Dashboard Navigation
+2. **Start the frontend** (in `frontend/` directory):
+```bash
+npm run dev
+```
 
-1. **Select Asset** - Choose from BTC/USD, XAU/USD, or NASDAQ
-2. **Explore Tabs** - Navigate through Market Analysis, News & Events, AI & Probability, Performance, and Tools
-3. **View Predictions** - Get AI-powered trading signals with confidence scores
-4. **Analyze Charts** - Interactive charts with technical indicators
-5. **Track Performance** - Monitor historical accuracy and backtesting results
+3. **Open browser**:
+Navigate to `http://localhost:3000`
 
-### Key Features
+### Using the Dashboard
 
-- **Real-time Updates**: Automatic data refresh for market prices and news
-- **Interactive Charts**: Zoom, pan, and explore detailed visualizations
-- **Historical Analysis**: View past performance and trends
-- **Probability Tools**: Monte Carlo simulation for risk assessment
-- **Personal Notes**: Save your trading ideas and observations
+1. **Home Page** - Overview of features and supported assets
+2. **Live Market** - Real-time market data and prices
+3. **AI Prediction** - Get AI-powered predictions with confidence scores
+4. **Compare Models** - Compare performance across different ML models
+5. **Performance** - Track model accuracy over time
+
+### Training New Models
+
+```bash
+# From project root
+python train_all_models.py
+```
+
+This will train all ML models (Logistic Regression, Random Forest, XGBoost, LightGBM, CatBoost) for BTC and XAU assets.
 
 ## 🎯 Tech Stack
 
-### Core Technologies
-- **Python 3.8+** - Core programming language
-- **Streamlit** - Interactive dashboard framework
-- **Pandas** - Data manipulation and analysis
-- **NumPy** - Numerical computing
-- **SQLite** - Database management
+### Frontend
+- **Next.js 14** - React framework with App Router
+- **TypeScript** - Type-safe JavaScript
+- **Tailwind CSS** - Utility-first CSS framework
+- **Lucide React** - Icon library
+- **Recharts** - Chart library
+- **Axios** - HTTP client
+
+### Backend
+- **FastAPI** - Modern Python web framework
+- **Pydantic** - Data validation
+- **SQLAlchemy** - ORM for database
+- **Uvicorn** - ASGI server
 
 ### Machine Learning
-- **Scikit-learn** - ML algorithms and utilities
-- **XGBoost** - Gradient boosting framework
+- **Scikit-learn** - ML algorithms
+- **XGBoost** - Gradient boosting
 - **LightGBM** - Light gradient boosting
 - **CatBoost** - Gradient boosting on decision trees
+- **Joblib** - Model serialization
 
-### Data Visualization
-- **Matplotlib** - Plotting library
-- **Seaborn** - Statistical data visualization
-- **Plotly** - Interactive plots
-
-### APIs & Data Sources
-- **Yahoo Finance** - Market data
-- **FRED** - Economic indicators
-- **News APIs** - Sentiment analysis
+### Data Sources
+- **yfinance** - Market data
+- **Yahoo Finance** - Additional market data
 
 ### Deployment
-- **Docker** - Containerization
-- **Streamlit Cloud** - Cloud deployment
+
+#### Frontend (Vercel)
+```bash
+cd frontend
+vercel deploy
+```
+
+#### Backend (Render/Railway)
+```bash
+cd backend
+# Deploy to Render or Railway
+```
 
 ## Configuration
 
-Edit `src/config.py` to customize:
-- Instruments and timeframes
-- Feature engineering parameters
-- Model settings
-- Trading parameters
-- Validation settings
+### Backend Configuration
 
-## Data Sources
+Edit `backend/src/config.py`:
+- API keys for data sources
+- Database connection strings
+- Model directory paths
+- CORS settings
 
-- **Price Data**: Yahoo Finance (free)
-- **Macro Data**: FRED (Federal Reserve Economic Data)
-- **Sentiment Data**: Yahoo Finance
+### Frontend Configuration
 
-## Model Performance Metrics
+Edit `frontend/.env.local`:
+- `NEXT_PUBLIC_API_URL` - Backend API URL
 
-- Accuracy, Precision, Recall, F1 Score
-- ROC AUC, Confusion Matrix
-- Win Rate, Profit Factor
-- Sharpe Ratio, Sortino Ratio
-- Maximum Drawdown, Calmar Ratio
+## Legacy Streamlit Version
 
-## Risk Management
+The original Streamlit dashboard is still available:
 
-- No data leakage (strict time-series validation)
-- No look-ahead bias
-- Walk-forward validation
-- Position sizing based on risk
-- Stop-loss and take-profit
+```bash
+# Install legacy dependencies
+pip install -r requirements.txt
+
+# Run Streamlit dashboard
+streamlit run streamlit_app.py
+```
 
 ## Contributing
 
-This is a research/educational project. Use at your own risk for trading.
+This is a research/educational project. Contributions are welcome!
 
 ## Disclaimer
 
