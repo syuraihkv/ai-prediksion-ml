@@ -2,12 +2,5 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "framework": "nextjs",
-  "regions": ["sin1"],
-  "env": {
-    "NEXT_PUBLIC_API_URL": {
-      "description": "Backend API URL (Render deployment)",
-      "value": "https://ai-market-prediction-api.onrender.com"
-    }
-  }
+  "framework": "nextjs"
 }
