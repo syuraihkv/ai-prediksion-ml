@@ -133,29 +133,66 @@ class NewsImpactFeatureEngineer:
             self.logger.error(f"Available columns: {df.columns.tolist()}")
             return pd.DataFrame()
         
-        # EMAs
-        for window in [20, 50, 200]:
-            df[f'EMA_{window}'] = EMAIndicator(close=df['Close'], window=window).ema_indicator()
-        
-        # RSI
-        df['RSI_14'] = RSIIndicator(close=df['Close'], window=14).rsi()
-        
-        # MACD
-        macd = MACD(close=df['Close'])
-        df['MACD'] = macd.macd()
-        df['MACD_Signal'] = macd.macd_signal()
-        df['MACD_Diff'] = macd.macd_diff()
-        
-        # ATR
-        df['ATR_14'] = AverageTrueRange(
-            high=df['High'], low=df['Low'], close=df['Close'], window=14
-        ).average_true_range()
-        
-        # Bollinger Bands
-        bollinger = BollingerBands(close=df['Close'], window=20)
-        df['BB_High'] = bollinger.bollinger_hband()
-        df['BB_Low'] = bollinger.bollinger_lband()
-        df['BB_Width'] = bollinger.bollinger_wband()
+        # Check if ta package is available
+        if not TA_AVAILABLE:
+            self.logger.warning("TA package not available, using basic technical indicators")
+            # Basic technical indicators using pandas only
+            for window in [20, 50, 200]:
+                df[f'EMA_{window}'] = df['Close'].ewm(span=window, adjust=False).mean()
+            
+            # Basic RSI calculation
+            delta = df['Close'].diff()
+            gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+            loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+            rs = gain / loss
+            df['RSI_14'] = 100 - (100 / (1 + rs))
+            
+            # Basic MACD calculation
+            ema_12 = df['Close'].ewm(span=12, adjust=False).mean()
+            ema_26 = df['Close'].ewm(span=26, adjust=False).mean()
+            df['MACD'] = ema_12 - ema_26
+            df['MACD_Signal'] = df['MACD'].ewm(span=9, adjust=False).mean()
+            df['MACD_Diff'] = df['MACD'] - df['MACD_Signal']
+            
+            # Basic ATR calculation
+            high_low = df['High'] - df['Low']
+            high_close = np.abs(df['High'] - df['Close'].shift())
+            low_close = np.abs(df['Low'] - df['Close'].shift())
+            ranges = pd.concat([high_low, high_close, low_close], axis=1)
+            true_range = ranges.max(axis=1)
+            df['ATR_14'] = true_range.rolling(window=14).mean()
+            
+            # Basic Bollinger Bands calculation
+            df['BB_Middle'] = df['Close'].rolling(window=20).mean()
+            bb_std = df['Close'].rolling(window=20).std()
+            df['BB_High'] = df['BB_Middle'] + (bb_std * 2)
+            df['BB_Low'] = df['BB_Middle'] - (bb_std * 2)
+            df['BB_Width'] = df['BB_High'] - df['BB_Low']
+        else:
+            # Use ta package for advanced indicators
+            # EMAs
+            for window in [20, 50, 200]:
+                df[f'EMA_{window}'] = EMAIndicator(close=df['Close'], window=window).ema_indicator()
+            
+            # RSI
+            df['RSI_14'] = RSIIndicator(close=df['Close'], window=14).rsi()
+            
+            # MACD
+            macd = MACD(close=df['Close'])
+            df['MACD'] = macd.macd()
+            df['MACD_Signal'] = macd.macd_signal()
+            df['MACD_Diff'] = macd.macd_diff()
+            
+            # ATR
+            df['ATR_14'] = AverageTrueRange(
+                high=df['High'], low=df['Low'], close=df['Close'], window=14
+            ).average_true_range()
+            
+            # Bollinger Bands
+            bollinger = BollingerBands(close=df['Close'], window=20)
+            df['BB_High'] = bollinger.bollinger_hband()
+            df['BB_Low'] = bollinger.bollinger_lband()
+            df['BB_Width'] = bollinger.bollinger_wband()
         
         # Returns
         df['Return_1d'] = df['Close'].pct_change()
