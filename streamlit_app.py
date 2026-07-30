@@ -2351,50 +2351,63 @@ def display_correlation_analysis(asset: str):
     
     st.markdown("#### 📊 Correlation Matrix")
     
-    # Calculate correlations (simulated for demo)
+    # Try to get real correlation data from market API
     correlations = {}
-    for related_asset in assets_to_compare:
-        # Simulated correlation values
-        import random
-        corr = random.uniform(-0.8, 0.9)
-        correlations[related_asset] = corr
+    try:
+        # Get price data for all assets
+        price_data = {}
+        for related_asset in assets_to_compare:
+            try:
+                data = st.session_state.market_api.get_ohlcv_data(related_asset.replace('/', ''), period='1mo')
+                if not data.empty:
+                    price_data[related_asset] = data['Close']
+            except Exception as e:
+                logger.error(f"Error fetching data for {related_asset}: {e}")
+        
+        # Get main asset data
+        try:
+            main_data = st.session_state.market_api.get_ohlcv_data(asset.replace('/', ''), period='1mo')
+            if not main_data.empty:
+                price_data[asset] = main_data['Close']
+        except Exception as e:
+            logger.error(f"Error fetching data for {asset}: {e}")
+        
+        # Calculate correlations if we have enough data
+        if len(price_data) >= 2:
+            import pandas as pd
+            df = pd.DataFrame(price_data)
+            corr_matrix_data = df.corr()
+            
+            # Extract correlations for display
+            for related_asset in assets_to_compare:
+                if related_asset in corr_matrix_data.columns and asset in corr_matrix_data.index:
+                    correlations[related_asset] = corr_matrix_data.loc[asset, related_asset]
+        else:
+            st.warning("⚠️ Insufficient price data available for correlation analysis. Please check API connectivity.")
+            return
+            
+    except Exception as e:
+        logger.error(f"Error calculating correlations: {e}")
+        st.warning("⚠️ Unable to calculate correlations due to data availability issues.")
+        return
     
-    # Create correlation heatmap
+    # Create correlation heatmap using real data
     try:
         import matplotlib.pyplot as plt
         import seaborn as sns
         
-        # Prepare correlation matrix
-        all_assets = [asset] + assets_to_compare
-        corr_matrix = []
-        
-        # Add self-correlation (1.0)
-        row = [1.0] + [correlations.get(a, 0) for a in assets_to_compare]
-        corr_matrix.append(row)
-        
-        # Add correlations for other assets
-        for related_asset in assets_to_compare:
-            row = [correlations.get(related_asset, 0)]
-            for a in assets_to_compare:
-                if a == related_asset:
-                    row.append(1.0)
-                else:
-                    # Simulated cross-correlation
-                    row.append(random.uniform(-0.5, 0.8))
-            corr_matrix.append(row)
-        
-        # Create heatmap
+        # Use the real correlation matrix we calculated
         fig, ax = plt.subplots(figsize=(10, 8))
         
-        sns.heatmap(corr_matrix, 
+        sns.heatmap(corr_matrix_data, 
                     annot=True, 
                     fmt='.2f', 
                     cmap='RdYlGn', 
                     center=0,
                     vmin=-1, 
                     vmax=1,
-                    xticklabels=all_assets,
-                    yticklabels=all_assets,
+                    xticklabels=corr_matrix_data.columns,
+                    yticklabels=corr_matrix_data.index,
                     ax=ax,
                     cbar_kws={'label': 'Correlation Coefficient'},
                     annot_kws={'color': 'white', 'weight': 'bold'})
@@ -2548,33 +2561,52 @@ def display_fear_greed_index(asset: str):
     </div>
     """, unsafe_allow_html=True)
     
-    # Historical comparison (simulated)
+    # Historical comparison - try to get real historical data or show warning
     st.markdown("#### 📈 Historical Comparison")
     
-    import random
-    historical_fg = [random.randint(20, 80) for _ in range(7)]
-    historical_fg[-1] = int(fg_index)
-    
-    import matplotlib.pyplot as plt
-    fig, ax = plt.subplots(figsize=(10, 4))
-    
-    days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    ax.plot(days, historical_fg, marker='o', linewidth=2, markersize=8, color='#6366f1')
-    ax.axhline(y=50, color='#cbd5e1', linestyle='--', alpha=0.5, label='Neutral')
-    ax.fill_between(days, 0, historical_fg, alpha=0.3, color='#6366f1')
-    
-    ax.set_ylim(0, 100)
-    ax.set_ylabel('Fear/Greed Index')
-    ax.set_facecolor('#1a1a2e')
-    fig.patch.set_facecolor('#1a1a2e')
-    ax.tick_params(colors='#cbd5e1')
-    ax.spines['bottom'].set_color('#cbd5e1')
-    ax.spines['top'].set_color('#cbd5e1')
-    ax.spines['left'].set_color('#cbd5e1')
-    ax.spines['right'].set_color('#cbd5e1')
-    ax.legend(facecolor='#1a1a2e', edgecolor='#cbd5e1', labelcolor='#cbd5e1')
-    
-    st.pyplot(fig)
+    try:
+        # Try to get historical sentiment data from database
+        historical_fg = []
+        try:
+            # Check if we have historical sentiment data in database
+            historical_data = st.session_state.database.get_historical_sentiment(asset, days=7)
+            if historical_data and len(historical_data) >= 7:
+                historical_fg = [data.get('fear_greed_index', 50) for data in historical_data[-7:]]
+            else:
+                # If no historical data, show warning and don't display fake data
+                st.warning("⚠️ Historical Fear/Greed data not available. Need more prediction history to show trends.")
+                historical_fg = None
+        except Exception as e:
+            logger.error(f"Error fetching historical sentiment data: {e}")
+            st.warning("⚠️ Unable to retrieve historical Fear/Greed data.")
+            historical_fg = None
+        
+        if historical_fg:
+            import matplotlib.pyplot as plt
+            fig, ax = plt.subplots(figsize=(10, 4))
+            
+            days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+            ax.plot(days, historical_fg, marker='o', linewidth=2, markersize=8, color='#6366f1')
+            ax.axhline(y=50, color='#cbd5e1', linestyle='--', alpha=0.5, label='Neutral')
+            ax.fill_between(days, 0, historical_fg, alpha=0.3, color='#6366f1')
+            
+            ax.set_ylim(0, 100)
+            ax.set_ylabel('Fear/Greed Index')
+            ax.set_facecolor('#1a1a2e')
+            fig.patch.set_facecolor('#1a1a2e')
+            ax.tick_params(colors='#cbd5e1')
+            ax.spines['bottom'].set_color('#cbd5e1')
+            ax.spines['top'].set_color('#cbd5e1')
+            ax.spines['left'].set_color('#cbd5e1')
+            ax.spines['right'].set_color('#cbd5e1')
+            ax.legend(facecolor='#1a1a2e', edgecolor='#cbd5e1', labelcolor='#cbd5e1')
+            
+            plt.tight_layout()
+            st.pyplot(fig)
+            
+    except Exception as e:
+        logger.error(f"Error creating historical Fear/Greed chart: {e}")
+        st.warning("Could not generate historical Fear/Greed chart")
     
     # Contrarian signals
     st.markdown("#### 🔄 Contrarian Trading Signals")
