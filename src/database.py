@@ -112,6 +112,27 @@ class DatabaseManager:
                 )
             """)
             
+            # Create news_prediction_history table for tracking actual results
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS news_prediction_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    asset TEXT NOT NULL,
+                    prediction TEXT NOT NULL,
+                    confidence REAL NOT NULL,
+                    predicted_price REAL,
+                    actual_price REAL,
+                    price_change REAL,
+                    price_change_percent REAL,
+                    is_correct INTEGER,
+                    news_sentiment TEXT,
+                    news_confidence REAL,
+                    prediction_timestamp TEXT NOT NULL,
+                    result_timestamp TEXT,
+                    time_horizon_days INTEGER,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
             # Create indexes for better query performance
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_economic_events_datetime 
@@ -131,6 +152,16 @@ class DatabaseManager:
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_predictions_timestamp 
                 ON predictions(timestamp)
+            """)
+            
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_news_prediction_history_asset 
+                ON news_prediction_history(asset)
+            """)
+            
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_news_prediction_history_timestamp 
+                ON news_prediction_history(prediction_timestamp)
             """)
             
             conn.commit()
@@ -446,6 +477,196 @@ class DatabaseManager:
             conn.commit()
         
         self.logger.info(f"Cleared data older than {days} days")
+    
+    def save_news_prediction_history(self, history: Dict[str, Any]) -> int:
+        """
+        Save news prediction with actual result to database.
+        
+        Args:
+            history: News prediction history dictionary
+        
+        Returns:
+            ID of inserted record
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                INSERT INTO news_prediction_history 
+                (asset, prediction, confidence, predicted_price, actual_price, price_change, 
+                 price_change_percent, is_correct, news_sentiment, news_confidence, 
+                 prediction_timestamp, result_timestamp, time_horizon_days)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                history.get('asset'),
+                history.get('prediction'),
+                history.get('confidence'),
+                history.get('predicted_price'),
+                history.get('actual_price'),
+                history.get('price_change'),
+                history.get('price_change_percent'),
+                history.get('is_correct'),
+                history.get('news_sentiment'),
+                history.get('news_confidence'),
+                history.get('prediction_timestamp'),
+                history.get('result_timestamp'),
+                history.get('time_horizon_days')
+            ))
+            
+            conn.commit()
+            return cursor.lastrowid
+    
+    def get_news_prediction_history(self, asset: str = None, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Retrieve news prediction history from database.
+        
+        Args:
+            asset: Optional asset filter
+            limit: Maximum number of records to retrieve
+        
+        Returns:
+            List of news prediction history
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            
+            query = "SELECT * FROM news_prediction_history WHERE 1=1"
+            params = []
+            
+            if asset:
+                query += " AND asset = ?"
+                params.append(asset)
+            
+            query += " ORDER BY prediction_timestamp DESC LIMIT ?"
+            params.append(limit)
+            
+            cursor.execute(query, params)
+            rows = cursor.fetchall()
+            
+            return [dict(row) for row in rows]
+    
+    def get_news_prediction_accuracy(self, asset: str = None, days: int = 30) -> Dict[str, Any]:
+        """
+        Calculate news prediction accuracy statistics.
+        
+        Args:
+            asset: Optional asset filter
+            days: Number of days to look back
+        
+        Returns:
+            Dictionary with accuracy statistics
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            
+            query = "SELECT * FROM news_prediction_history WHERE 1=1"
+            params = []
+            
+            if asset:
+                query += " AND asset = ?"
+                params.append(asset)
+            
+            if days:
+                cutoff_date = (datetime.now() - pd.Timedelta(days=days)).strftime('%Y-%m-%d')
+                query += " AND prediction_timestamp >= ?"
+                params.append(cutoff_date)
+            
+            cursor.execute(query, params)
+            rows = cursor.fetchall()
+            
+            if not rows:
+                return {
+                    'total_predictions': 0,
+                    'correct_predictions': 0,
+                    'accuracy': 0.0,
+                    'buy_accuracy': 0.0,
+                    'sell_accuracy': 0.0,
+                    'average_confidence': 0.0,
+                    'total_buy': 0,
+                    'total_sell': 0,
+                    'correct_buy': 0,
+                    'correct_sell': 0
+                }
+            
+            total = len(rows)
+            correct = sum(1 for row in rows if row['is_correct'] == 1)
+            
+            # Buy/Sell breakdown
+            buy_predictions = [row for row in rows if row['prediction'] == 'BUY']
+            sell_predictions = [row for row in rows if row['prediction'] == 'SELL']
+            
+            total_buy = len(buy_predictions)
+            total_sell = len(sell_predictions)
+            
+            correct_buy = sum(1 for row in buy_predictions if row['is_correct'] == 1)
+            correct_sell = sum(1 for row in sell_predictions if row['is_correct'] == 1)
+            
+            buy_accuracy = correct_buy / total_buy if total_buy > 0 else 0.0
+            sell_accuracy = correct_sell / total_sell if total_sell > 0 else 0.0
+            
+            # Average confidence
+            avg_confidence = sum(row['confidence'] for row in rows) / total if total > 0 else 0.0
+            
+            return {
+                'total_predictions': total,
+                'correct_predictions': correct,
+                'accuracy': correct / total if total > 0 else 0.0,
+                'buy_accuracy': buy_accuracy,
+                'sell_accuracy': sell_accuracy,
+                'average_confidence': avg_confidence,
+                'total_buy': total_buy,
+                'total_sell': total_sell,
+                'correct_buy': correct_buy,
+                'correct_sell': correct_sell
+            }
+    
+    def cleanup_old_news_predictions(self, min_months: int = 6, max_months: int = 12):
+        """
+        Cleanup old news prediction history records.
+        
+        Args:
+            min_months: Minimum months to keep (default: 6)
+            max_months: Maximum months to keep (default: 12)
+        """
+        # Delete records older than max_months
+        max_cutoff_date = (datetime.now() - pd.Timedelta(days=max_months*30)).strftime('%Y-%m-%d')
+        
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            # Count records to be deleted
+            cursor.execute("""
+                SELECT COUNT(*) FROM news_prediction_history 
+                WHERE prediction_timestamp < ?
+            """, (max_cutoff_date,))
+            count = cursor.fetchone()[0]
+            
+            # Delete old records
+            cursor.execute("""
+                DELETE FROM news_prediction_history 
+                WHERE prediction_timestamp < ?
+            """, (max_cutoff_date,))
+            
+            conn.commit()
+        
+        self.logger.info(f"Cleaned up {count} news prediction records older than {max_months} months")
+        
+        # Archive records between min_months and max_months (optional - could be moved to archive table)
+        min_cutoff_date = (datetime.now() - pd.Timedelta(days=min_months*30)).strftime('%Y-%m-%d')
+        
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            # Count records in the retention period
+            cursor.execute("""
+                SELECT COUNT(*) FROM news_prediction_history 
+                WHERE prediction_timestamp >= ? AND prediction_timestamp < ?
+            """, (min_cutoff_date, max_cutoff_date))
+            retention_count = cursor.fetchone()[0]
+        
+        self.logger.info(f"Keeping {retention_count} news prediction records from {min_months} to {max_months} months")
 
 
 if __name__ == "__main__":

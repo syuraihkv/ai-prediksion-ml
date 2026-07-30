@@ -3160,6 +3160,24 @@ def display_historical_accuracy(asset: str):
             'average_confidence': 0.0
         }
     
+    # Get news prediction accuracy with error handling
+    try:
+        news_accuracy_stats = st.session_state.database.get_news_prediction_accuracy(asset=asset, days=30)
+    except Exception as e:
+        logger.error(f"Error fetching news prediction accuracy: {e}")
+        news_accuracy_stats = {
+            'total_predictions': 0,
+            'correct_predictions': 0,
+            'accuracy': 0.0,
+            'buy_accuracy': 0.0,
+            'sell_accuracy': 0.0,
+            'average_confidence': 0.0,
+            'total_buy': 0,
+            'total_sell': 0,
+            'correct_buy': 0,
+            'correct_sell': 0
+        }
+    
     # Display metrics row
     col1, col2, col3, col4 = st.columns(4)
     
@@ -3178,6 +3196,73 @@ def display_historical_accuracy(asset: str):
     with col4:
         st.metric("Average Confidence", f"{accuracy_stats['average_confidence']:.1%}",
                  help="Average confidence score across all predictions")
+    
+    # News Prediction Accuracy Section
+    st.markdown("---")
+    st.markdown("#### 📰 News Prediction Accuracy (Last 30 Days)")
+    
+    news_col1, news_col2, news_col3, news_col4 = st.columns(4)
+    
+    with news_col1:
+        st.metric("News Accuracy", f"{news_accuracy_stats['accuracy']:.1%}",
+                 help="Overall accuracy of news-based predictions")
+    
+    with news_col2:
+        st.metric("BUY Accuracy", f"{news_accuracy_stats['buy_accuracy']:.1%}",
+                 help="Accuracy of BUY predictions from news")
+    
+    with news_col3:
+        st.metric("SELL Accuracy", f"{news_accuracy_stats['sell_accuracy']:.1%}",
+                 help="Accuracy of SELL predictions from news")
+    
+    with news_col4:
+        st.metric("News Confidence", f"{news_accuracy_stats['average_confidence']:.1%}",
+                 help="Average confidence of news predictions")
+    
+    # News prediction details
+    news_col_left, news_col_right = st.columns([2, 1])
+    
+    with news_col_left:
+        st.markdown("##### 📋 News Prediction Breakdown")
+        
+        if news_accuracy_stats['total_predictions'] > 0:
+            news_data = {
+                'Metric': ['Total Predictions', 'Correct Predictions', 'BUY Predictions', 'Correct BUY', 'SELL Predictions', 'Correct SELL'],
+                'Value': [
+                    news_accuracy_stats['total_predictions'],
+                    news_accuracy_stats['correct_predictions'],
+                    news_accuracy_stats['total_buy'],
+                    news_accuracy_stats['correct_buy'],
+                    news_accuracy_stats['total_sell'],
+                    news_accuracy_stats['correct_sell']
+                ]
+            }
+            st.dataframe(pd.DataFrame(news_data), width='stretch')
+        else:
+            st.info("No news prediction data available yet")
+    
+    with news_col_right:
+        st.markdown("##### 🗑️ Data Management")
+        
+        # Auto-cleanup info
+        st.markdown("""
+        <div class="metric-card">
+            <h4>Retention Policy</h4>
+            <p><strong>Min:</strong> 6 months</p>
+            <p><strong>Max:</strong> 12 months</p>
+            <p>Old predictions are automatically cleaned up.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Manual cleanup button
+        if st.button("Run Cleanup Now", key="cleanup_news"):
+            try:
+                st.session_state.database.cleanup_old_news_predictions(min_months=6, max_months=12)
+                st.success("Cleanup completed successfully!")
+                st.rerun()
+            except Exception as e:
+                logger.error(f"Error during cleanup: {e}")
+                st.error(f"Cleanup failed: {e}")
     
     # Split layout: Stats table + Summary
     col_left, col_right = st.columns([2, 1])
