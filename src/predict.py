@@ -22,6 +22,7 @@ from datetime import datetime
 
 from src.economic_api import EconomicAPI
 from src.market_api import MarketAPI
+from src.config import MODELS_DIR
 try:
     from src.news_analyzer import NewsAnalyzer
     NEWS_ANALYZER_AVAILABLE = True
@@ -53,7 +54,11 @@ class PredictionSystem:
             logger: Optional logger instance
         """
         self.logger = logger or setup_logger("PredictionSystem")
-        self.model_dir = model_dir or Path("data/models")
+        # Use the absolute path from config (PROJECT_ROOT / data / models)
+        # instead of a cwd-relative "data/models" -- a relative path breaks
+        # whenever Streamlit (or anything else) is launched from a different
+        # working directory, even if the model files are in the right place.
+        self.model_dir = model_dir or MODELS_DIR
         self.model = None
         self.model_name = None
         
@@ -91,17 +96,29 @@ class PredictionSystem:
             self.logger.error(f"Error loading model: {e}")
             self.model = None
     
-    def load_all_models(self):
+    def load_all_models(self, asset: str = None):
         """
         Load all available models for comparison.
-        
+
+        Args:
+            asset: If given, only load models saved with this asset's prefix
+                (e.g. "XAU_LogisticRegression.joblib" for asset="XAU").
+                This matters because a model trained on one asset's price/feature
+                distribution should never be applied to a different asset -- the
+                feature scales are completely different and predictions would be
+                meaningless (or silently fail and get counted as a fake "HOLD" vote).
+
         Returns:
             Dictionary of model names to model objects
         """
         models = {}
         try:
             model_files = list(self.model_dir.glob("*.joblib"))
-            
+            if asset:
+                model_files = [
+                    f for f in model_files if f.stem.upper().startswith(f"{asset.upper()}_")
+                ]
+
             for model_file in model_files:
                 try:
                     model = joblib.load(model_file)
@@ -110,16 +127,19 @@ class PredictionSystem:
                 except Exception as e:
                     self.logger.error(f"Error loading model {model_file.stem}: {e}")
             
-            # Add default models if no models found
+            # IMPORTANT: do NOT fabricate untrained default models here.
+            # Previously this fit LogisticRegression/RandomForest/DecisionTree on
+            # np.random data just so predict_proba() wouldn't crash -- that produces
+            # a BUY/SELL "signal" with a confidence score that is pure noise, with
+            # no indication to the user that it isn't real. If no real trained
+            # models are found, return an empty dict so callers can surface an
+            # honest "no trained model available" state instead.
             if not models:
-                from sklearn.linear_model import LogisticRegression
-                from sklearn.ensemble import RandomForestClassifier
-                from sklearn.tree import DecisionTreeClassifier
-                
-                models['Logistic_Regression'] = LogisticRegression(random_state=42)
-                models['Random_Forest'] = RandomForestClassifier(random_state=42, n_estimators=50)
-                models['Decision_Tree'] = DecisionTreeClassifier(random_state=42)
-                self.logger.info("Using default models for comparison")
+                self.logger.warning(
+                    "No trained model files for asset=%s found in %s (looked for "
+                    "files named '%s_*.joblib'). No fabricated/random model will be used.",
+                    asset, self.model_dir, (asset.upper() if asset else "<asset>")
+                )
             
             return models
             
@@ -137,7 +157,7 @@ class PredictionSystem:
         Returns:
             Dictionary with model comparison results
         """
-        models = self.load_all_models()
+        models = self.load_all_models(asset=asset)
         
         if not models:
             return {'error': 'No models available for comparison'}
