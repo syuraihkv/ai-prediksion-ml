@@ -1724,77 +1724,10 @@ def display_economic_calendar(asset: str):
             </div>
             """, unsafe_allow_html=True)
     
-    # Historical impact analysis
+    # Historical impact analysis - requires historical event data
     st.markdown("#### 📊 Historical Impact Analysis")
     
-    try:
-        import matplotlib.pyplot as plt
-        
-        # Simulated historical impact data
-        historical_events = [
-            {'event': 'Non-Farm Payrolls', 'avg_move': 1.2, 'volatility': 2.5, 'direction': 'Mixed'},
-            {'event': 'CPI m/m', 'avg_move': 0.8, 'volatility': 1.8, 'direction': 'Mixed'},
-            {'event': 'FOMC Rate Decision', 'avg_move': 1.5, 'volatility': 3.0, 'direction': 'Mixed'},
-            {'event': 'Retail Sales', 'avg_move': 0.5, 'volatility': 1.2, 'direction': 'Mixed'},
-            {'event': 'Unemployment Rate', 'avg_move': 0.9, 'volatility': 2.0, 'direction': 'Mixed'}
-        ]
-        
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-        
-        # Average price movement
-        events = [e['event'] for e in historical_events]
-        avg_moves = [e['avg_move'] for e in historical_events]
-        colors = ['#34d399' if move > 1 else '#fbbf24' for move in avg_moves]
-        
-        ax1.barh(events, avg_moves, color=colors, alpha=0.7)
-        ax1.set_xlabel('Average Price Movement (%)')
-        ax1.set_title('Historical Average Price Impact')
-        ax1.set_facecolor('#1a1a2e')
-        ax1.tick_params(colors='#cbd5e1')
-        ax1.spines['bottom'].set_color('#cbd5e1')
-        ax1.spines['top'].set_color('#cbd5e1')
-        ax1.spines['left'].set_color('#cbd5e1')
-        ax1.spines['right'].set_color('#cbd5e1')
-        ax1.grid(True, alpha=0.2)
-        
-        # Volatility impact
-        volatilities = [e['volatility'] for e in historical_events]
-        vol_colors = ['#f87171' if vol > 2 else '#fbbf24' for vol in volatilities]
-        
-        ax2.barh(events, volatilities, color=vol_colors, alpha=0.7)
-        ax2.set_xlabel('Volatility Increase (%)')
-        ax2.set_title('Historical Volatility Impact')
-        ax2.set_facecolor('#1a1a2e')
-        ax2.tick_params(colors='#cbd5e1')
-        ax2.spines['bottom'].set_color('#cbd5e1')
-        ax2.spines['top'].set_color('#cbd5e1')
-        ax2.spines['left'].set_color('#cbd5e1')
-        ax2.spines['right'].set_color('#cbd5e1')
-        ax2.grid(True, alpha=0.2)
-        
-        fig.patch.set_facecolor('#1a1a2e')
-        plt.tight_layout()
-        st.pyplot(fig)
-        
-        # Impact summary
-        st.markdown("#### 📝 Impact Summary")
-        st.markdown("""
-        <div class="premium-card">
-            <h4>Historical Impact Insights</h4>
-            <ul>
-                <li><strong>FOMC Rate Decision:</strong> Highest volatility impact (3.0% avg)</li>
-                <li><strong>Non-Farm Payrolls:</strong> Significant price movement (1.2% avg)</li>
-                <li><strong>CPI m/m:</strong> Moderate impact on both price and volatility</li>
-                <li><strong>Unemployment Rate:</strong> Consistent volatility increase</li>
-                <li><strong>Retail Sales:</strong> Lower impact but still notable</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-    except Exception as e:
-        logger.error(f"Error creating historical impact analysis: {e}")
-        st.warning("Could not generate historical impact analysis")
-    else:
-        st.warning("No economic events available")
+    st.info("⚠️ Historical impact analysis requires historical economic event data and corresponding price movements. This feature needs database schema updates to track event history and calculate actual impact metrics. Consider implementing event history tracking for this analysis.")
 
 
 def display_probability_calculator(asset: str):
@@ -2101,34 +2034,10 @@ def display_volume_analysis(asset: str):
         </div>
         """, unsafe_allow_html=True)
         
-        # Market depth (simulated)
+        # Market depth - not available with current API
         st.markdown("#### 📚 Market Depth")
         
-        # Simulated order book
-        order_book = {
-            'bids': [
-                {'price': volume_data.get('current_price', 0) * 0.999, 'size': 1000},
-                {'price': volume_data.get('current_price', 0) * 0.998, 'size': 2500},
-                {'price': volume_data.get('current_price', 0) * 0.997, 'size': 5000},
-            ],
-            'asks': [
-                {'price': volume_data.get('current_price', 0) * 1.001, 'size': 1200},
-                {'price': volume_data.get('current_price', 0) * 1.002, 'size': 3000},
-                {'price': volume_data.get('current_price', 0) * 1.003, 'size': 6000},
-            ]
-        }
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("**Bids (Buy Orders)**")
-            for bid in order_book['bids']:
-                st.markdown(f"- ${bid['price']:.2f}: {bid['size']:,} units")
-        
-        with col2:
-            st.markdown("**Asks (Sell Orders)**")
-            for ask in order_book['asks']:
-                st.markdown(f"- ${ask['price']:.2f}: {ask['size']:,} units")
+        st.info("⚠️ Real-time order book data (Market Depth) requires exchange API access. This feature is not available with current data sources. Consider using exchange-specific APIs for live order book data.")
         
         # Volume conclusion
         st.markdown("#### 📝 Volume Conclusion")
@@ -3442,40 +3351,34 @@ def main():
         # API Status
         st.markdown("### API Status")
         
-        # Economic API status with latency
+        # Economic API status
         economic_status = "✅ Online" if st.session_state.economic_api else "❌ Offline"
-        economic_latency = f"{np.random.randint(10, 50)} ms" if st.session_state.economic_api else "N/A"
         st.markdown(f"""
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
             <div>
                 <span style="color: #cbd5e1; font-size: 0.9rem;">Economic API</span>
-                <div style="color: #64748b; font-size: 0.75rem;">Latency: {economic_latency}</div>
             </div>
             <span class="status-online" style="font-size: 0.85rem;">{economic_status}</span>
         </div>
         """, unsafe_allow_html=True)
         
-        # News API status with latency
+        # News API status
         news_status = "✅ Online" if NEWS_ANALYZER_AVAILABLE and st.session_state.news_analyzer else "❌ Offline"
-        news_latency = f"{np.random.randint(100, 500)} ms" if NEWS_ANALYZER_AVAILABLE and st.session_state.news_analyzer else "N/A"
         st.markdown(f"""
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
             <div>
                 <span style="color: #cbd5e1; font-size: 0.9rem;">News API</span>
-                <div style="color: #64748b; font-size: 0.75rem;">Latency: {news_latency}</div>
             </div>
             <span class="status-online" style="font-size: 0.85rem;">{news_status}</span>
         </div>
         """, unsafe_allow_html=True)
         
-        # Market API status with latency
+        # Market API status
         market_status = "✅ Online" if st.session_state.market_api else "❌ Offline"
-        market_latency = f"{np.random.randint(20, 80)} ms" if st.session_state.market_api else "N/A"
         st.markdown(f"""
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
             <div>
                 <span style="color: #cbd5e1; font-size: 0.9rem;">Market API</span>
-                <div style="color: #64748b; font-size: 0.75rem;">Latency: {market_latency}</div>
             </div>
             <span class="status-online" style="font-size: 0.85rem;">{market_status}</span>
         </div>
