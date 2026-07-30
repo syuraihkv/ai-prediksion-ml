@@ -6,11 +6,9 @@ from fastapi import APIRouter, HTTPException
 from typing import List, Dict, Any
 from datetime import datetime
 import logging
-import joblib
-from pathlib import Path
 
 from src.schemas import ModelComparisonResponse, ModelPerformanceResponse
-from src.config import settings
+from src.services.prediction_service import prediction_service
 
 logger = logging.getLogger(__name__)
 
@@ -23,49 +21,36 @@ async def compare_models(asset: str):
     try:
         asset = asset.upper()
         
-        # Load models for the asset
-        models_dir = Path(settings.MODELS_DIR)
-        asset_models = list(models_dir.glob(f"{asset}_*.joblib"))
+        # Get model info from prediction service
+        models_info = prediction_service.get_model_info(asset)
         
-        if not asset_models:
+        if not models_info:
             raise HTTPException(
                 status_code=404,
                 detail=f"No trained models found for {asset}"
             )
         
-        # Load all models and get their info
-        models_info = []
-        for model_file in asset_models:
-            model_name = model_file.stem.replace(f"{asset}_", "")
-            try:
-                model = joblib.load(model_file)
-                
-                # Get model metrics (simplified - in production, load from database)
-                models_info.append({
-                    "name": model_name,
-                    "type": model.__class__.__name__,
-                    "accuracy": 0.52,  # Placeholder - in production, load from database
-                    "precision": 0.53,
-                    "recall": 0.52,
-                    "f1_score": 0.52,
-                    "roc_auc": 0.53
-                })
-                logger.info(f"Loaded model: {model_name}")
-            except Exception as e:
-                logger.error(f"Error loading model {model_name}: {e}")
+        # Convert to format expected by frontend
+        models_data = []
+        for model_info in models_info:
+            # In production, load actual performance metrics from database
+            # For now, use placeholder values
+            models_data.append({
+                "name": model_info['name'],
+                "type": model_info['name'],  # Simplified - in production get from model
+                "accuracy": 0.52,
+                "precision": 0.53,
+                "recall": 0.52,
+                "f1_score": 0.52,
+                "roc_auc": 0.53
+            })
         
-        if not models_info:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to load any models"
-            )
-        
-        # Select best model based on accuracy
-        best_model = max(models_info, key=lambda x: x['accuracy'])['name']
+        # Select best model based on accuracy (in production, use actual metrics)
+        best_model = max(models_data, key=lambda x: x['accuracy'])['name']
         
         return ModelComparisonResponse(
             asset=asset,
-            models=models_info,
+            models=models_data,
             best_model=best_model,
             timestamp=datetime.utcnow()
         )
@@ -81,6 +66,9 @@ async def compare_models(asset: str):
 async def list_models():
     """List all available trained models."""
     try:
+        from src.config import settings
+        from pathlib import Path
+        
         models_dir = Path(settings.MODELS_DIR)
         all_models = list(models_dir.glob("*.joblib"))
         
