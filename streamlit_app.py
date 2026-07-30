@@ -3123,27 +3123,28 @@ def display_model_comparison(asset: str):
 def display_historical_accuracy(asset: str):
     """Display historical accuracy page."""
     # Hero card with prediction summary (use cached prediction)
-    if 'cached_prediction' in st.session_state:
+    if 'cached_prediction' in st.session_state and st.session_state.cached_prediction:
         prediction_result = st.session_state.cached_prediction
-        prediction = prediction_result.get('prediction', 'HOLD')
-        confidence = prediction_result.get('confidence', 0.5)
-        prediction_emoji = {'BUY': '🟢', 'SELL': '🔴', 'HOLD': '⚪'}.get(prediction, '❓')
-        prediction_class = 'buy-signal' if prediction == 'BUY' else 'sell-signal' if prediction == 'SELL' else 'premium-card'
-        
-        st.markdown(f"""
-        <div class="{prediction_class}">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h2 style="margin: 0; font-size: 1.8rem;">{prediction_emoji} {prediction}</h2>
-                    <p style="margin: 0.5rem 0 0 0; color: rgba(255,255,255,0.7); font-size: 0.9rem;">AI Signal</p>
-                </div>
-                <div style="text-align: right;">
-                    <h2 style="margin: 0; font-size: 1.8rem;">{confidence:.1%}</h2>
-                    <p style="margin: 0.5rem 0 0 0; color: rgba(255,255,255,0.7); font-size: 0.9rem;">Confidence</p>
+        if isinstance(prediction_result, dict):
+            prediction = prediction_result.get('prediction', 'HOLD')
+            confidence = prediction_result.get('confidence', 0.5)
+            prediction_emoji = {'BUY': '🟢', 'SELL': '🔴', 'HOLD': '⚪'}.get(prediction, '❓')
+            prediction_class = 'buy-signal' if prediction == 'BUY' else 'sell-signal' if prediction == 'SELL' else 'premium-card'
+            
+            st.markdown(f"""
+            <div class="{prediction_class}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.8rem;">{prediction_emoji} {prediction}</h2>
+                        <p style="margin: 0.5rem 0 0 0; color: rgba(255,255,255,0.7); font-size: 0.9rem;">AI Signal</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <h2 style="margin: 0; font-size: 1.8rem;">{confidence:.1%}</h2>
+                        <p style="margin: 0.5rem 0 0 0; color: rgba(255,255,255,0.7); font-size: 0.9rem;">Confidence</p>
+                    </div>
                 </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
     
     st.markdown(f"### 📈 Historical Accuracy - {asset}")
     st.markdown("*Prediction performance tracking and analysis*")
