@@ -15,10 +15,21 @@ Output: Feature matrix ready for model training
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple
-from ta import add_all_ta_features
-from ta.trend import SMAIndicator, EMAIndicator, MACD
-from ta.momentum import RSIIndicator
-from ta.volatility import AverageTrueRange, BollingerBands
+try:
+    from ta import add_all_ta_features
+    from ta.trend import SMAIndicator, EMAIndicator, MACD
+    from ta.momentum import RSIIndicator
+    from ta.volatility import AverageTrueRange, BollingerBands
+    TA_AVAILABLE = True
+except ImportError:
+    TA_AVAILABLE = False
+    add_all_ta_features = None
+    SMAIndicator = None
+    EMAIndicator = None
+    MACD = None
+    RSIIndicator = None
+    AverageTrueRange = None
+    BollingerBands = None
 
 from src.utils import setup_logger
 
